@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Presentation as PresentationIcon, Wand2, Download, Layers, AlertCircle, FileText, Loader2, Plus, Sparkles, LayoutTemplate, Image as ImageIcon, Type, Palette, Feather, Diamond, LogOut, LayoutDashboard, Save } from 'lucide-react';
-import { Slide, GenerationMode, PresentationStyle, PPTXThemeId, SlideTransition, ImageQuality, User, Presentation } from './types';
+import { Slide, GenerationMode, PresentationStyle, PPTXThemeId, SlideTransition, ImageQuality, User, Presentation, ToolId } from './types';
 import { generateSlidesFromText } from './services/geminiService';
 import { downloadPPTX, THEMES } from './services/pptxService';
 import { authService } from './services/authService';
@@ -11,9 +11,11 @@ import { ThemeSelector } from './components/ThemeSelector';
 import { AuthScreen } from './components/AuthScreen';
 import { LandingPage } from './components/LandingPage';
 import { Dashboard } from './components/Dashboard';
+import { ToolsGrid } from './components/ToolsGrid';
+import { LessonPlanner, QuizMaker, IcebreakerGenerator } from './components/AICreatorTools';
 import { v4 as uuidv4 } from 'uuid';
 
-type ViewMode = 'DASHBOARD' | 'CREATE' | 'EDIT';
+type ViewMode = 'DASHBOARD' | 'CREATE_SELECT' | 'CREATE_SLIDES' | 'CREATE_LESSON' | 'CREATE_QUIZ' | 'CREATE_ICEBREAKER' | 'EDIT_SLIDES';
 
 const BANNER_IMAGES = [
   "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000", // Team/Meeting
@@ -35,7 +37,7 @@ const App: React.FC = () => {
   const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [loadingPresentations, setLoadingPresentations] = useState(false);
 
-  // Editor/Generator State
+  // Slide Generator State
   const [currentPresentationId, setCurrentPresentationId] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -57,18 +59,16 @@ const App: React.FC = () => {
 
   // --- Effects ---
 
-  // 1. Check Auth on Mount
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     if (currentUser) {
       setUser(currentUser);
       loadPresentations(currentUser.id);
-      setShowLanding(false); // Skip landing if logged in
+      setShowLanding(false);
     }
     setAuthLoading(false);
   }, []);
 
-  // 2. Banner Animation Effect
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % BANNER_IMAGES.length);
@@ -76,7 +76,6 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // 3. Load Presentations helper
   const loadPresentations = async (userId: string) => {
     setLoadingPresentations(true);
     try {
@@ -104,17 +103,34 @@ const App: React.FC = () => {
     setSlides([]);
     setInputText("");
     setCurrentPresentationId(null);
-    setShowLanding(true); // Go back to landing page on logout
+    setShowLanding(true);
     setViewMode('DASHBOARD');
   };
 
-  const handleCreateNew = () => {
-    setSlides([]);
-    setInputText("");
-    setCurrentPresentationId(null);
-    setCurrentTheme(PPTXThemeId.CORPORATE_BLUE);
-    setError(null);
-    setViewMode('CREATE');
+  const handleCreateNewClick = () => {
+    setViewMode('CREATE_SELECT');
+  };
+
+  const handleToolSelect = (toolId: ToolId) => {
+    switch (toolId) {
+      case ToolId.SLIDE_GENERATOR:
+        setSlides([]);
+        setInputText("");
+        setCurrentPresentationId(null);
+        setCurrentTheme(PPTXThemeId.CORPORATE_BLUE);
+        setError(null);
+        setViewMode('CREATE_SLIDES');
+        break;
+      case ToolId.LESSON_PLANNER:
+        setViewMode('CREATE_LESSON');
+        break;
+      case ToolId.QUIZ_MAKER:
+        setViewMode('CREATE_QUIZ');
+        break;
+      case ToolId.ICEBREAKER:
+        setViewMode('CREATE_ICEBREAKER');
+        break;
+    }
   };
 
   const handleOpenDashboard = () => {
@@ -128,7 +144,7 @@ const App: React.FC = () => {
     setSlides(presentation.slides);
     setCurrentPresentationId(presentation.id);
     setCurrentTheme(presentation.themeId);
-    setViewMode('EDIT');
+    setViewMode('EDIT_SLIDES');
     setLastSaved(presentation.lastModified);
   };
 
@@ -139,31 +155,7 @@ const App: React.FC = () => {
     }
   };
 
-  const saveCurrentWork = async (manual = false) => {
-    if (!user || slides.length === 0) return;
-    
-    setIsSaving(true);
-    try {
-      const savedPresentation = await presentationService.savePresentation(
-        user.id,
-        currentPresentationId,
-        slides,
-        currentTheme
-      );
-      setCurrentPresentationId(savedPresentation.id);
-      setLastSaved(Date.now());
-      if (manual) {
-        // Maybe show a toast
-      }
-    } catch (e) {
-      console.error("Failed to save", e);
-      setError("Failed to save progress.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleGenerate = async () => {
+  const handleGenerateSlides = async () => {
     if (!inputText.trim()) {
       setError("Please enter some text to generate slides.");
       return;
@@ -190,9 +182,9 @@ const App: React.FC = () => {
       }));
 
       setSlides(newSlides);
-      setViewMode('EDIT'); // Switch to results view
+      setViewMode('EDIT_SLIDES');
       
-      // Auto-save the generated result
+      // Auto-save
       if (user) {
         const saved = await presentationService.savePresentation(user.id, null, newSlides, currentTheme);
         setCurrentPresentationId(saved.id);
@@ -328,16 +320,16 @@ const App: React.FC = () => {
                     <span className="hidden sm:inline">Dashboard</span>
                 </button>
                  <button 
-                    onClick={handleCreateNew}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'CREATE' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                    onClick={handleCreateNewClick}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode.startsWith('CREATE') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}
                 >
                     <Plus size={18} />
-                    <span className="hidden sm:inline">New</span>
+                    <span className="hidden sm:inline">New Project</span>
                 </button>
             </div>
 
             {/* Action Buttons for Edit Mode */}
-            {viewMode === 'EDIT' && slides.length > 0 && (
+            {viewMode === 'EDIT_SLIDES' && slides.length > 0 && (
               <div className="flex items-center gap-2 sm:gap-3 border-l border-slate-200 pl-4">
                 <div className="hidden md:flex items-center gap-2 text-xs text-slate-400 mr-2">
                     {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
@@ -386,12 +378,42 @@ const App: React.FC = () => {
                 isLoading={loadingPresentations}
                 onOpenPresentation={handleOpenPresentation}
                 onDeletePresentation={handleDeletePresentation}
-                onCreateNew={handleCreateNew}
+                onCreateNew={handleCreateNewClick}
             />
         )}
 
-        {/* VIEW: CREATE (Input) */}
-        {viewMode === 'CREATE' && (
+        {/* VIEW: CREATE SELECT (TOOLS GRID) */}
+        {viewMode === 'CREATE_SELECT' && (
+          <div className="animate-fade-in py-8">
+            <h2 className="text-3xl font-bold text-slate-900 text-center mb-2">What would you like to create?</h2>
+            <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto">Select a tool to start generating content with AI.</p>
+            <ToolsGrid onSelectTool={handleToolSelect} />
+          </div>
+        )}
+
+        {/* VIEW: LESSON PLAN GENERATOR */}
+        {viewMode === 'CREATE_LESSON' && (
+            <div className="animate-fade-in">
+                <LessonPlanner onBack={handleCreateNewClick} />
+            </div>
+        )}
+
+        {/* VIEW: QUIZ MAKER */}
+        {viewMode === 'CREATE_QUIZ' && (
+            <div className="animate-fade-in">
+                <QuizMaker onBack={handleCreateNewClick} />
+            </div>
+        )}
+
+        {/* VIEW: ICEBREAKER GENERATOR */}
+        {viewMode === 'CREATE_ICEBREAKER' && (
+            <div className="animate-fade-in">
+                <IcebreakerGenerator onBack={handleCreateNewClick} />
+            </div>
+        )}
+
+        {/* VIEW: CREATE SLIDES (Input) */}
+        {viewMode === 'CREATE_SLIDES' && (
           <div className="max-w-4xl mx-auto animate-fade-in">
             {/* Hero Header with Animated Background */}
             <div className="relative rounded-3xl overflow-hidden mb-8 shadow-xl min-h-[300px] flex items-center justify-center">
@@ -408,6 +430,15 @@ const App: React.FC = () => {
 
               {/* Overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/90 to-slate-900/90 mix-blend-multiply z-10" />
+              
+              {/* Back Button */}
+               <button 
+                  onClick={handleCreateNewClick}
+                  className="absolute top-6 left-6 z-30 p-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition-colors"
+                  title="Back"
+                >
+                  <Sparkles size={16} />
+               </button>
               
               {/* Content */}
               <div className="relative z-20 px-8 py-12 text-center">
@@ -575,7 +606,7 @@ const App: React.FC = () => {
 
               {/* Action Button */}
               <button
-                onClick={handleGenerate}
+                onClick={handleGenerateSlides}
                 disabled={isGenerating || !inputText.trim()}
                 className={`w-full py-4 rounded-xl flex items-center justify-center gap-3 text-lg font-bold transition-all ${
                   isGenerating || !inputText.trim()
@@ -599,8 +630,8 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* VIEW: EDIT (Results) */}
-        {viewMode === 'EDIT' && (
+        {/* VIEW: EDIT SLIDES (Results) */}
+        {viewMode === 'EDIT_SLIDES' && (
           <div className="animate-fade-in-up">
             <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
               <div>
@@ -616,7 +647,7 @@ const App: React.FC = () => {
               </div>
               <div className="flex gap-3">
                  <button
-                  onClick={handleCreateNew} // Just go to create new instead of reset state entirely
+                  onClick={handleCreateNewClick} // Just go to create new instead of reset state entirely
                   className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
                 >
                   Close

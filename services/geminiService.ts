@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { GenerationMode, SlideResponse, PresentationStyle, ImageQuality } from "../types";
+import { GenerationMode, SlideResponse, PresentationStyle, ImageQuality, LessonPlan, Quiz, Icebreaker } from "../types";
 
 const initializeGenAI = () => {
   if (!process.env.API_KEY) {
@@ -177,4 +177,101 @@ export const generateSlidesFromText = async (
     console.error("Failed to process slides:", error);
     throw new Error("Failed to generate slides or images.");
   }
+};
+
+export const generateLessonPlan = async (topic: string, gradeLevel: string): Promise<LessonPlan> => {
+  const ai = initializeGenAI();
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING },
+      gradeLevel: { type: Type.STRING },
+      subject: { type: Type.STRING },
+      duration: { type: Type.STRING },
+      objectives: { type: Type.ARRAY, items: { type: Type.STRING } },
+      materials: { type: Type.ARRAY, items: { type: Type.STRING } },
+      procedure: { 
+        type: Type.ARRAY, 
+        items: { 
+          type: Type.OBJECT, 
+          properties: { time: { type: Type.STRING }, activity: { type: Type.STRING } } 
+        } 
+      },
+      assessment: { type: Type.STRING }
+    },
+    required: ["title", "objectives", "procedure", "assessment"]
+  };
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: `Create a detailed lesson plan for grade ${gradeLevel} about: ${topic}`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: schema
+    }
+  });
+
+  return JSON.parse(response.text!) as LessonPlan;
+};
+
+export const generateQuiz = async (topic: string, difficulty: string, questionCount: number): Promise<Quiz> => {
+  const ai = initializeGenAI();
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING },
+      description: { type: Type.STRING },
+      questions: { 
+        type: Type.ARRAY, 
+        items: { 
+          type: Type.OBJECT, 
+          properties: { 
+            question: { type: Type.STRING }, 
+            options: { type: Type.ARRAY, items: { type: Type.STRING } }, 
+            correctAnswer: { type: Type.STRING },
+            explanation: { type: Type.STRING }
+          },
+          required: ["question", "options", "correctAnswer"]
+        } 
+      }
+    },
+    required: ["title", "questions"]
+  };
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: `Create a ${difficulty} difficulty quiz with ${questionCount} multiple choice questions about: ${topic}. Include specific correct answers and explanations.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: schema
+    }
+  });
+
+  return JSON.parse(response.text!) as Quiz;
+};
+
+export const generateIcebreaker = async (context: string): Promise<Icebreaker> => {
+  const ai = initializeGenAI();
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING },
+      duration: { type: Type.STRING },
+      instructions: { type: Type.ARRAY, items: { type: Type.STRING } },
+      materials: { type: Type.ARRAY, items: { type: Type.STRING } },
+      whyItWorks: { type: Type.STRING }
+    },
+    required: ["title", "instructions", "whyItWorks"]
+  };
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: `Create a fun, engaging icebreaker activity for: ${context}. Keep it under 15 minutes.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: schema
+    }
+  });
+
+  return JSON.parse(response.text!) as Icebreaker;
 };

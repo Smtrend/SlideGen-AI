@@ -75,3 +75,44 @@ export interface SlideResponse {
     image?: string;
   }[];
 }
+
+// --- NEW TOOL TYPES ---
+
+export enum ToolId {
+  SLIDE_GENERATOR = 'SLIDE_GENERATOR',
+  LESSON_PLANNER = 'LESSON_PLANNER',
+  QUIZ_MAKER = 'QUIZ_MAKER',
+  ICEBREAKER = 'ICEBREAKER'
+}
+
+export interface LessonPlan {
+  title: string;
+  gradeLevel: string;
+  subject: string;
+  duration: string;
+  objectives: string[];
+  materials: string[];
+  procedure: { time: string; activity: string }[];
+  assessment: string;
+}
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+}
+
+export interface Quiz {
+  title: string;
+  description: string;
+  questions: QuizQuestion[];
+}
+
+export interface Icebreaker {
+  title: string;
+  duration: string;
+  instructions: string[];
+  materials: string[];
+  whyItWorks: string;
+}
