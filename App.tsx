@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { Presentation, Wand2, Download, Layers, AlertCircle, FileText, Loader2, Plus, Sparkles, LayoutTemplate, Image as ImageIcon, Type, Palette } from 'lucide-react';
-import { Slide, GenerationMode, PresentationStyle, PPTXThemeId } from './types';
+import { Slide, GenerationMode, PresentationStyle, PPTXThemeId, SlideTransition } from './types';
 import { generateSlidesFromText } from './services/geminiService';
-import { downloadPPTX } from './services/pptxService';
+import { downloadPPTX, THEMES } from './services/pptxService';
 import { SlideCard } from './components/SlideCard';
 import { SlideEditor } from './components/SlideEditor';
+import { ThemeSelector } from './components/ThemeSelector';
 import { v4 as uuidv4 } from 'uuid';
 
 const App: React.FC = () => {
@@ -43,7 +44,8 @@ const App: React.FC = () => {
         title: s.title,
         bullets: s.bullets,
         speakerNotes: s.speakerNotes,
-        image: s.image // Map the AI generated image
+        image: s.image, // Map the AI generated image
+        transition: SlideTransition.FADE // Default transition
       }));
 
       setSlides(newSlides);
@@ -79,7 +81,8 @@ const App: React.FC = () => {
       id: uuidv4(),
       title: "New Slide",
       bullets: ["Click edit to add content"],
-      speakerNotes: ""
+      speakerNotes: "Add your speaker notes here.",
+      transition: SlideTransition.FADE
     };
     setSlides([...slides, newSlide]);
   };
@@ -104,27 +107,17 @@ const App: React.FC = () => {
             </span>
           </div>
           {slides.length > 0 && (
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 border border-slate-200">
-                <Palette size={16} className="text-slate-500"/>
-                <select 
-                  value={currentTheme}
-                  onChange={(e) => setCurrentTheme(e.target.value as PPTXThemeId)}
-                  className="bg-transparent text-sm font-medium text-slate-700 outline-none cursor-pointer border-none focus:ring-0"
-                >
-                  <option value={PPTXThemeId.CORPORATE_BLUE}>Corporate Blue</option>
-                  <option value={PPTXThemeId.MODERN_GREEN}>Modern Green</option>
-                  <option value={PPTXThemeId.ELEGANT_PURPLE}>Elegant Purple</option>
-                  <option value={PPTXThemeId.CLASSIC_GRAY}>Classic Gray</option>
-                  <option value={PPTXThemeId.WARM_ORANGE}>Warm Orange</option>
-                </select>
-              </div>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ThemeSelector 
+                currentTheme={currentTheme}
+                onThemeChange={setCurrentTheme}
+              />
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-all shadow-sm font-medium"
+                className="flex items-center gap-2 bg-slate-900 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-slate-800 transition-all shadow-sm font-medium"
               >
                 <Download size={18} />
-                Export PPTX
+                <span className="hidden sm:inline">Export PPTX</span>
               </button>
             </div>
           )}
@@ -314,6 +307,7 @@ const App: React.FC = () => {
                   <SlideCard
                     slide={slide}
                     index={index}
+                    theme={THEMES[currentTheme]}
                     onEdit={handleEditSlide}
                     onDelete={handleDeleteSlide}
                   />

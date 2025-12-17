@@ -1,7 +1,7 @@
 import PptxGenJS from "pptxgenjs";
-import { Slide, PPTXThemeId } from "../types";
+import { Slide, PPTXThemeId, ThemeColors, SlideTransition } from "../types";
 
-const THEMES: Record<PPTXThemeId, { header: string; text: string; bg: string; accent: string }> = {
+export const THEMES: Record<PPTXThemeId, ThemeColors> = {
   [PPTXThemeId.CORPORATE_BLUE]: { header: "4F46E5", text: "363636", bg: "FFFFFF", accent: "4F46E5" }, // Indigo
   [PPTXThemeId.MODERN_GREEN]: { header: "059669", text: "1F2937", bg: "F0FDF4", accent: "059669" }, // Emerald
   [PPTXThemeId.ELEGANT_PURPLE]: { header: "7C3AED", text: "2E1065", bg: "FAF5FF", accent: "7C3AED" }, // Violet
@@ -32,8 +32,20 @@ export const downloadPPTX = (slides: Slide[], themeId: PPTXThemeId = PPTXThemeId
   slides.forEach((slide) => {
     const slideObj = pres.addSlide();
     
-    // Add Transition
-    slideObj.transition = { type: "fade", duration: 1000 };
+    // Apply Background Image if exists (Overrides Master Background)
+    if (slide.backgroundImage) {
+      slideObj.background = { data: slide.backgroundImage };
+    }
+    
+    // Add Transition (Default to Fade if not specified, or use the slide's choice)
+    const transitionType = slide.transition && slide.transition !== SlideTransition.NONE 
+      ? slide.transition 
+      : "fade";
+      
+    // If the user explicitly selected "none", we don't set transition, otherwise we default to fade or the selected one.
+    if (slide.transition !== SlideTransition.NONE) {
+        slideObj.transition = { type: transitionType as any, duration: 1000 };
+    }
     
     // Add Title
     slideObj.addText(slide.title, {

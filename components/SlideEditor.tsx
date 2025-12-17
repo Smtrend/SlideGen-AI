@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Slide } from '../types';
-import { X, Plus, Trash, Image as ImageIcon, Upload } from 'lucide-react';
+import { Slide, SlideTransition } from '../types';
+import { X, Plus, Trash, Image as ImageIcon, Upload, Monitor, Presentation } from 'lucide-react';
 
 interface SlideEditorProps {
   slide: Slide;
@@ -14,7 +14,11 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ slide, isOpen, onSave,
   const [bullets, setBullets] = useState(slide.bullets);
   const [notes, setNotes] = useState(slide.speakerNotes || '');
   const [image, setImage] = useState<string | undefined>(slide.image);
+  const [backgroundImage, setBackgroundImage] = useState<string | undefined>(slide.backgroundImage);
+  const [transition, setTransition] = useState<SlideTransition>(slide.transition || SlideTransition.FADE);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bgFileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset state when slide changes
   useEffect(() => {
@@ -22,6 +26,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ slide, isOpen, onSave,
     setBullets(slide.bullets);
     setNotes(slide.speakerNotes || '');
     setImage(slide.image);
+    setBackgroundImage(slide.backgroundImage);
+    setTransition(slide.transition || SlideTransition.FADE);
   }, [slide]);
 
   if (!isOpen) return null;
@@ -52,10 +58,28 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ slide, isOpen, onSave,
     }
   };
 
+  const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBackgroundImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const removeImage = () => {
     setImage(undefined);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const removeBackgroundImage = () => {
+    setBackgroundImage(undefined);
+    if (bgFileInputRef.current) {
+      bgFileInputRef.current.value = '';
     }
   };
 
@@ -66,6 +90,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ slide, isOpen, onSave,
       bullets: bullets.filter(b => b.trim() !== ''), // Remove empty bullets
       speakerNotes: notes,
       image: image,
+      backgroundImage: backgroundImage,
+      transition: transition
     });
   };
 
@@ -129,74 +155,128 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ slide, isOpen, onSave,
 
             {/* Speaker Notes */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Speaker Notes (Optional)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Detailed Speaker Notes</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={4}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none text-sm"
-                placeholder="Add notes for the presenter..."
+                rows={8}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-y text-sm leading-relaxed"
+                placeholder="Add comprehensive notes for the presenter..."
               />
+              <p className="text-xs text-slate-400 mt-2 text-right">
+                These notes will be exported to PowerPoint.
+              </p>
             </div>
           </div>
 
-          {/* Right Column: Image & Preview */}
+          {/* Right Column: Visuals */}
           <div className="space-y-6">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Slide Image</label>
             
-            <div className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center min-h-[300px] transition-all ${image ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'}`}>
-              {image ? (
-                <div className="relative w-full h-full flex items-center justify-center group">
-                  <img 
-                    src={image} 
-                    alt="Slide Visual" 
-                    className="max-w-full max-h-[400px] object-contain rounded-lg shadow-sm"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-4">
-                     <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="bg-white/90 p-2 rounded-full text-slate-700 hover:text-indigo-600"
-                      title="Change Image"
-                    >
-                      <Upload size={20} />
-                    </button>
-                    <button
-                      onClick={removeImage}
-                      className="bg-white/90 p-2 rounded-full text-slate-700 hover:text-red-600"
-                      title="Remove Image"
-                    >
-                      <Trash size={20} />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center text-slate-400 hover:text-indigo-600 transition-colors w-full h-full justify-center"
-                >
-                  <div className="p-4 bg-white rounded-full shadow-sm mb-3">
-                    <ImageIcon size={32} />
-                  </div>
-                  <span className="font-medium">Click to upload an image</span>
-                  <span className="text-xs mt-1 text-slate-400">Supports JPG, PNG</span>
-                </button>
-              )}
-              
-              <input 
-                ref={fileInputRef}
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageUpload} 
-                className="hidden"
-              />
+            {/* Transition Selector */}
+             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <Presentation size={18} className="text-emerald-500" />
+                Slide Transition
+              </label>
+              <select
+                value={transition}
+                onChange={(e) => setTransition(e.target.value as SlideTransition)}
+                className="w-full p-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+              >
+                <option value={SlideTransition.NONE}>None</option>
+                <option value={SlideTransition.FADE}>Fade</option>
+                <option value={SlideTransition.PUSH}>Push</option>
+                <option value={SlideTransition.WIPE}>Wipe</option>
+                <option value={SlideTransition.COVER}>Cover</option>
+                <option value={SlideTransition.UNCOVER}>Uncover</option>
+              </select>
+               <p className="text-xs text-slate-400 mt-2">
+                Animation effect when entering this slide.
+              </p>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-800">
-               <p className="flex items-start gap-2">
-                 <span className="font-bold">Tip:</span> 
-                 Images will be placed on the right side of the slide, with bullet points on the left.
-               </p>
+            {/* Content Image Section */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <ImageIcon size={18} className="text-indigo-500" />
+                Slide Content Image
+              </label>
+              
+              {image ? (
+                <div className="relative group">
+                  <div className="aspect-video w-full rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm">
+                    <img src={image} alt="Slide content" className="w-full h-full object-contain" />
+                  </div>
+                  <button
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                    title="Remove Image"
+                  >
+                    <Trash size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="aspect-video w-full border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group"
+                >
+                  <Upload size={32} className="text-slate-400 group-hover:text-indigo-500 mb-2" />
+                  <span className="text-sm text-slate-500 group-hover:text-indigo-600 font-medium">Upload Image</span>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <p className="text-xs text-slate-400 mt-2">
+                This image appears alongside your bullet points.
+              </p>
             </div>
+
+            {/* Background Image Section */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <Monitor size={18} className="text-violet-500" />
+                Slide Background
+              </label>
+              
+              {backgroundImage ? (
+                <div className="relative group">
+                  <div className="aspect-video w-full rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm">
+                    <img src={backgroundImage} alt="Slide background" className="w-full h-full object-cover" />
+                  </div>
+                  <button
+                    onClick={removeBackgroundImage}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                    title="Remove Background"
+                  >
+                    <Trash size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div 
+                  onClick={() => bgFileInputRef.current?.click()}
+                  className="aspect-video w-full border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-violet-400 hover:bg-violet-50/50 transition-all group"
+                >
+                  <Upload size={32} className="text-slate-400 group-hover:text-violet-500 mb-2" />
+                  <span className="text-sm text-slate-500 group-hover:text-violet-600 font-medium">Set Background</span>
+                </div>
+              )}
+              <input
+                ref={bgFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleBackgroundUpload}
+                className="hidden"
+              />
+              <p className="text-xs text-slate-400 mt-2">
+                This image will cover the entire slide background.
+              </p>
+            </div>
+
           </div>
         </div>
 
@@ -204,13 +284,13 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ slide, isOpen, onSave,
         <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 rounded-b-2xl">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium transition-colors"
+            className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-200/60 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-all transform active:scale-95"
+            className="px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all active:scale-95"
           >
             Save Changes
           </button>

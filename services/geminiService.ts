@@ -51,10 +51,13 @@ export const generateSlidesFromText = async (
               items: { type: Type.STRING },
               description: "Bullet points for the slide body",
             },
-            speakerNotes: { type: Type.STRING, description: "Notes for the presenter" },
+            speakerNotes: { 
+              type: Type.STRING, 
+              description: "Extremely detailed speaker notes. This should function as a script for the presenter, elaborating deeply on every bullet point, creating a narrative flow, and explaining the 'why' behind the content." 
+            },
             imagePrompt: { type: Type.STRING, description: "A visual description for an image to accompany this slide. E.g. 'A bar chart showing growth' or 'Team shaking hands'." },
           },
-          required: ["title", "bullets", "imagePrompt"],
+          required: ["title", "bullets", "imagePrompt", "speakerNotes"],
         },
       },
     },
@@ -69,10 +72,11 @@ export const generateSlidesFromText = async (
       Your task is to take the user's input text and split it into logical slides.
       
       RULES:
-      1. DO NOT rewrite, summarize, or creatively expand the content unless necessary for coherence.
+      1. DO NOT rewrite, summarize, or creatively expand the slide content (bullets) unless necessary for coherence.
       2. Keep the wording as close to the original as possible.
       3. CRITICAL: Ensure ALL parts of the provided input text are represented in the slides.
       4. Create as many slides as necessary.
+      5. SPEAKER NOTES: While the slides stay strict, you MUST write comprehensive speaker notes that explain the points in detail.
     `;
   } else {
     systemInstruction = `
@@ -116,6 +120,7 @@ export const generateSlidesFromText = async (
 
   systemInstruction += `\n${styleInstruction}`;
   systemInstruction += `\nIMPORTANT: For EVERY slide, generate a 'imagePrompt' field that describes a relevant visual/illustration for that slide.`;
+  systemInstruction += `\nIMPORTANT: For EVERY slide, generate 'speakerNotes' that are verbose, conversational, and explanatory. Do not just repeat the bullets. Explain them.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",

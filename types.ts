@@ -4,6 +4,17 @@ export interface Slide {
   bullets: string[];
   speakerNotes?: string;
   image?: string; // Base64 string for the image
+  backgroundImage?: string; // Base64 string for the background image
+  transition?: SlideTransition;
+}
+
+export enum SlideTransition {
+  NONE = 'none',
+  FADE = 'fade',
+  PUSH = 'push',
+  WIPE = 'wipe',
+  COVER = 'cover',
+  UNCOVER = 'uncover'
 }
 
 export enum GenerationMode {
@@ -23,6 +34,13 @@ export enum PPTXThemeId {
   ELEGANT_PURPLE = 'ELEGANT_PURPLE',
   CLASSIC_GRAY = 'CLASSIC_GRAY',
   WARM_ORANGE = 'WARM_ORANGE'
+}
+
+export interface ThemeColors {
+  header: string;
+  text: string;
+  bg: string;
+  accent: string;
 }
 
 export interface SlideResponse {
