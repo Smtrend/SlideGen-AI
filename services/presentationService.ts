@@ -1,44 +1,50 @@
 import { Presentation, Slide, PPTXThemeId } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { openDB, DBSchema } from 'idb';
 
-const PRESENTATIONS_KEY = 'slidegen_presentations';
+interface SlideGenDB extends DBSchema {
+  presentations: {
+    key: string;
+    value: Presentation;
+    indexes: { 'by-user': string };
+  };
+}
 
-// Helper to simulate delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const DB_NAME = 'slidegen-db';
+const STORE_NAME = 'presentations';
+
+const dbPromise = openDB<SlideGenDB>(DB_NAME, 1, {
+  upgrade(db) {
+    const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    store.createIndex('by-user', 'userId');
+  },
+});
 
 export const presentationService = {
   async getUserPresentations(userId: string): Promise<Presentation[]> {
-    await delay(300);
-    const allPresentations: Presentation[] = JSON.parse(localStorage.getItem(PRESENTATIONS_KEY) || '[]');
-    return allPresentations
-      .filter(p => p.userId === userId)
-      .sort((a, b) => b.lastModified - a.lastModified);
+    const db = await dbPromise;
+    const allPresentations = await db.getAllFromIndex(STORE_NAME, 'by-user', userId);
+    return allPresentations.sort((a, b) => b.lastModified - a.lastModified);
   },
 
   async savePresentation(userId: string, presentationId: string | null, slides: Slide[], themeId: PPTXThemeId, title?: string): Promise<Presentation> {
-    await delay(300);
-    const allPresentations: Presentation[] = JSON.parse(localStorage.getItem(PRESENTATIONS_KEY) || '[]');
-    
+    const db = await dbPromise;
     const now = Date.now();
-    let presentation: Presentation;
-
-    // Use the first slide's title as the presentation title if not provided, or fallback
     const derivedTitle = title || slides[0]?.title || "Untitled Presentation";
 
+    let presentation: Presentation;
+
     if (presentationId) {
-      // Update existing
-      const index = allPresentations.findIndex(p => p.id === presentationId);
-      if (index !== -1) {
+      const existing = await db.get(STORE_NAME, presentationId);
+      if (existing) {
         presentation = {
-          ...allPresentations[index],
+          ...existing,
           slides,
           themeId,
           title: derivedTitle,
           lastModified: now
         };
-        allPresentations[index] = presentation;
       } else {
-        // Fallback if ID not found (shouldn't happen)
         presentation = {
           id: presentationId,
           userId,
@@ -48,10 +54,8 @@ export const presentationService = {
           createdAt: now,
           lastModified: now
         };
-        allPresentations.push(presentation);
       }
     } else {
-      // Create new
       presentation = {
         id: uuidv4(),
         userId,
@@ -61,23 +65,25 @@ export const presentationService = {
         createdAt: now,
         lastModified: now
       };
-      allPresentations.push(presentation);
     }
 
-    localStorage.setItem(PRESENTATIONS_KEY, JSON.stringify(allPresentations));
+    try {
+        await db.put(STORE_NAME, presentation);
+    } catch (e) {
+        console.error("IndexedDB Save Error:", e);
+        throw new Error("Failed to save presentation. Storage might be full.");
+    }
+    
     return presentation;
   },
 
   async deletePresentation(id: string): Promise<void> {
-    await delay(300);
-    let allPresentations: Presentation[] = JSON.parse(localStorage.getItem(PRESENTATIONS_KEY) || '[]');
-    allPresentations = allPresentations.filter(p => p.id !== id);
-    localStorage.setItem(PRESENTATIONS_KEY, JSON.stringify(allPresentations));
+    const db = await dbPromise;
+    await db.delete(STORE_NAME, id);
   },
 
   async getPresentationById(id: string): Promise<Presentation | null> {
-     await delay(200);
-     const allPresentations: Presentation[] = JSON.parse(localStorage.getItem(PRESENTATIONS_KEY) || '[]');
-     return allPresentations.find(p => p.id === id) || null;
+     const db = await dbPromise;
+     return (await db.get(STORE_NAME, id)) || null;
   }
 };
