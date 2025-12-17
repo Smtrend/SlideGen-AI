@@ -14,6 +14,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 type ViewMode = 'DASHBOARD' | 'CREATE' | 'EDIT';
 
+const BANNER_IMAGES = [
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000", // Team/Meeting
+  "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=2000", // Creative/Abstract
+  "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000", // Office/Space
+  "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=2000"  // Tech/Work
+];
+
 const App: React.FC = () => {
   // Auth State
   const [user, setUser] = useState<User | null>(null);
@@ -43,6 +50,9 @@ const App: React.FC = () => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [currentEditingSlide, setCurrentEditingSlide] = useState<Slide | null>(null);
 
+  // Banner Animation State
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
   // --- Effects ---
 
   // 1. Check Auth on Mount
@@ -55,7 +65,15 @@ const App: React.FC = () => {
     setAuthLoading(false);
   }, []);
 
-  // 2. Load Presentations helper
+  // 2. Banner Animation Effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % BANNER_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 3. Load Presentations helper
   const loadPresentations = async (userId: string) => {
     setLoadingPresentations(true);
     try {
@@ -200,10 +218,6 @@ const App: React.FC = () => {
     setSlides(updatedSlides);
     setIsEditorOpen(false);
     setCurrentEditingSlide(null);
-    // Auto save changes to storage
-    // We defer the save call slightly to allow state update or just call save logic with new data
-    // For simplicity, we can just call the save function but it relies on 'slides' state which might not be updated yet in closure
-    // Better to pass data directly or use effect. Let's force a save with new data.
     if(user) {
         presentationService.savePresentation(user.id, currentPresentationId, updatedSlides, currentTheme)
             .then(p => {
@@ -358,17 +372,38 @@ const App: React.FC = () => {
 
         {/* VIEW: CREATE (Input) */}
         {viewMode === 'CREATE' && (
-          <div className="max-w-3xl mx-auto animate-fade-in">
-            <div className="text-center mb-10">
-              <h1 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-                New <span className="text-indigo-600">Presentation</span>
-              </h1>
-              <p className="text-lg text-slate-600">
-                Paste your content below and let our AI handle the design structure.
-              </p>
+          <div className="max-w-4xl mx-auto animate-fade-in">
+            {/* Hero Header with Animated Background */}
+            <div className="relative rounded-3xl overflow-hidden mb-8 shadow-xl min-h-[300px] flex items-center justify-center">
+              {/* Animated Background Slideshow */}
+              {BANNER_IMAGES.map((img, index) => (
+                <div
+                  key={img}
+                  className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
+                    index === currentBannerIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  style={{ backgroundImage: `url("${img}")` }}
+                />
+              ))}
+
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/90 to-slate-900/90 mix-blend-multiply z-10" />
+              
+              {/* Content */}
+              <div className="relative z-20 px-8 py-12 text-center">
+                 <div className="inline-flex items-center justify-center p-3 bg-white/10 backdrop-blur-sm rounded-xl mb-6 border border-white/20 shadow-inner">
+                    <Wand2 className="text-indigo-300" size={32} />
+                 </div>
+                 <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight drop-shadow-sm">
+                  Create New <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-violet-200">Presentation</span>
+                </h1>
+                <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mx-auto font-medium leading-relaxed">
+                  Transform your raw text into beautiful, professional slides in seconds using advanced AI.
+                </p>
+              </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-200/60">
+            <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200/60">
               
               {/* Configuration Section */}
               <div className="flex flex-col sm:flex-row gap-6 mb-6">
