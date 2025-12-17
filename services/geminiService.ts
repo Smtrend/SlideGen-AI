@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { GenerationMode, SlideResponse, PresentationStyle, ImageQuality, LessonPlan, Quiz, Icebreaker } from "../types";
+import { GenerationMode, SlideResponse, PresentationStyle, ImageQuality, LessonPlan, Quiz, Icebreaker, LessonNote, NoteSummary } from "../types";
 
 const initializeGenAI = () => {
   if (!process.env.API_KEY) {
@@ -274,4 +274,100 @@ export const generateIcebreaker = async (context: string): Promise<Icebreaker> =
   });
 
   return JSON.parse(response.text!) as Icebreaker;
+};
+
+export const generateLessonNote = async (topic: string, subject: string, gradeLevel: string): Promise<LessonNote> => {
+  const ai = initializeGenAI();
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      topic: { type: Type.STRING },
+      subject: { type: Type.STRING },
+      gradeLevel: { type: Type.STRING },
+      introduction: { type: Type.STRING },
+      sections: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: { heading: { type: Type.STRING }, content: { type: Type.STRING } }
+        }
+      },
+      keyTerms: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: { term: { type: Type.STRING }, definition: { type: Type.STRING } }
+        }
+      },
+      summary: { type: Type.STRING }
+    },
+    required: ["topic", "introduction", "sections", "keyTerms", "summary"]
+  };
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: `Create detailed, well-structured student lesson notes for the topic "${topic}" in the subject "${subject}" for grade level "${gradeLevel}". 
+    The notes should be educational, easy to understand, and comprehensive.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: schema
+    }
+  });
+
+  return JSON.parse(response.text!) as LessonNote;
+};
+
+export const summarizeNote = async (
+  content: string, 
+  imageBase64: string | undefined, 
+  mode: 'SUMMARIZE' | 'EXPLAIN'
+): Promise<NoteSummary> => {
+  const ai = initializeGenAI();
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING },
+      summary: { type: Type.STRING },
+      keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+      actionableItems: { type: Type.ARRAY, items: { type: Type.STRING } }
+    },
+    required: ["title", "summary", "keyPoints"]
+  };
+
+  const parts: any[] = [];
+  
+  if (imageBase64) {
+    // Extract base64 data and mime type. Default to image/jpeg if simplified
+    const mimeType = imageBase64.substring(imageBase64.indexOf(':') + 1, imageBase64.indexOf(';'));
+    const data = imageBase64.split(',')[1];
+    parts.push({
+      inlineData: {
+        mimeType: mimeType,
+        data: data
+      }
+    });
+  }
+
+  if (content) {
+    parts.push({ text: content });
+  }
+
+  const prompt = mode === 'SUMMARIZE' 
+    ? "Analyze the provided content (text and/or image). Provide a concise summary, bullet list of key takeaways, and any actionable study items."
+    : "Analyze the provided content (text and/or image). Provide a detailed explanation of the concepts found, simplify complex terms for a student, and list key points.";
+
+  parts.push({ text: prompt });
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash", // multimodal model
+    contents: {
+      parts: parts
+    },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: schema
+    }
+  });
+
+  return JSON.parse(response.text!) as NoteSummary;
 };

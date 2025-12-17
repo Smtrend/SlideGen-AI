@@ -82,7 +82,9 @@ export enum ToolId {
   SLIDE_GENERATOR = 'SLIDE_GENERATOR',
   LESSON_PLANNER = 'LESSON_PLANNER',
   QUIZ_MAKER = 'QUIZ_MAKER',
-  ICEBREAKER = 'ICEBREAKER'
+  ICEBREAKER = 'ICEBREAKER',
+  LESSON_NOTE_MAKER = 'LESSON_NOTE_MAKER',
+  NOTE_SUMMARIZER = 'NOTE_SUMMARIZER'
 }
 
 export interface LessonPlan {
@@ -115,4 +117,21 @@ export interface Icebreaker {
   instructions: string[];
   materials: string[];
   whyItWorks: string;
+}
+
+export interface LessonNote {
+  topic: string;
+  subject: string;
+  gradeLevel: string;
+  introduction: string;
+  sections: { heading: string; content: string }[];
+  keyTerms: { term: string; definition: string }[];
+  summary: string;
+}
+
+export interface NoteSummary {
+  title: string;
+  summary: string;
+  keyPoints: string[];
+  actionableItems: string[];
 }

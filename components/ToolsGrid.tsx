@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, HelpCircle, MessageCircle, Presentation } from 'lucide-react';
+import { BookOpen, HelpCircle, MessageCircle, Presentation, FileText, ScanLine } from 'lucide-react';
 import { ToolId } from '../types';
 
 interface ToolsGridProps {
@@ -27,6 +27,15 @@ export const ToolsGrid: React.FC<ToolsGridProps> = ({ onSelectTool }) => {
       bgSoft: "bg-purple-50"
     },
     {
+      id: ToolId.LESSON_NOTE_MAKER,
+      title: "AI Lesson Note Maker",
+      description: "Create detailed, structured study notes for any topic.",
+      icon: <FileText className="text-white" size={32} />,
+      color: "bg-blue-600",
+      hoverColor: "group-hover:text-blue-600",
+      bgSoft: "bg-blue-50"
+    },
+    {
       id: ToolId.QUIZ_MAKER,
       title: "AI Quiz Maker",
       description: "Generate ready-to-use quizzes with one click.",
@@ -34,6 +43,15 @@ export const ToolsGrid: React.FC<ToolsGridProps> = ({ onSelectTool }) => {
       color: "bg-pink-600",
       hoverColor: "group-hover:text-pink-600",
       bgSoft: "bg-pink-50"
+    },
+    {
+      id: ToolId.NOTE_SUMMARIZER,
+      title: "Note Summarizer & Scanner",
+      description: "Scan notes or paste text to summarize and explain.",
+      icon: <ScanLine className="text-white" size={32} />,
+      color: "bg-orange-600",
+      hoverColor: "group-hover:text-orange-600",
+      bgSoft: "bg-orange-50"
     },
     {
       id: ToolId.ICEBREAKER,

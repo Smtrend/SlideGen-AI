@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Presentation as PresentationIcon, Wand2, Download, Layers, AlertCircle, FileText, Loader2, Plus, Sparkles, LayoutTemplate, Image as ImageIcon, Type, Palette, Feather, Diamond, LogOut, LayoutDashboard, Save } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Presentation as PresentationIcon, Wand2, Download, Layers, AlertCircle, FileText, Loader2, Plus, Sparkles, LayoutTemplate, Image as ImageIcon, Type, Palette, Feather, Diamond, LogOut, LayoutDashboard, Save, ChevronDown } from 'lucide-react';
 import { Slide, GenerationMode, PresentationStyle, PPTXThemeId, SlideTransition, ImageQuality, User, Presentation, ToolId } from './types';
 import { generateSlidesFromText } from './services/geminiService';
 import { downloadPPTX, THEMES } from './services/pptxService';
@@ -12,10 +12,10 @@ import { AuthScreen } from './components/AuthScreen';
 import { LandingPage } from './components/LandingPage';
 import { Dashboard } from './components/Dashboard';
 import { ToolsGrid } from './components/ToolsGrid';
-import { LessonPlanner, QuizMaker, IcebreakerGenerator } from './components/AICreatorTools';
+import { LessonPlanner, QuizMaker, IcebreakerGenerator, LessonNoteMaker, NoteSummarizer } from './components/AICreatorTools';
 import { v4 as uuidv4 } from 'uuid';
 
-type ViewMode = 'DASHBOARD' | 'CREATE_SELECT' | 'CREATE_SLIDES' | 'CREATE_LESSON' | 'CREATE_QUIZ' | 'CREATE_ICEBREAKER' | 'EDIT_SLIDES';
+type ViewMode = 'DASHBOARD' | 'CREATE_SELECT' | 'CREATE_SLIDES' | 'CREATE_LESSON' | 'CREATE_QUIZ' | 'CREATE_ICEBREAKER' | 'EDIT_SLIDES' | 'CREATE_LESSON_NOTE' | 'CREATE_NOTE_SUMMARY';
 
 const BANNER_IMAGES = [
   "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000", // Team/Meeting
@@ -32,6 +32,8 @@ const App: React.FC = () => {
 
   // App Navigation State
   const [viewMode, setViewMode] = useState<ViewMode>('DASHBOARD');
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Dashboard Data State
   const [presentations, setPresentations] = useState<Presentation[]>([]);
@@ -76,6 +78,16 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const loadPresentations = async (userId: string) => {
     setLoadingPresentations(true);
     try {
@@ -105,6 +117,7 @@ const App: React.FC = () => {
     setCurrentPresentationId(null);
     setShowLanding(true);
     setViewMode('DASHBOARD');
+    setIsUserMenuOpen(false);
   };
 
   const handleCreateNewClick = () => {
@@ -129,6 +142,12 @@ const App: React.FC = () => {
         break;
       case ToolId.ICEBREAKER:
         setViewMode('CREATE_ICEBREAKER');
+        break;
+      case ToolId.LESSON_NOTE_MAKER:
+        setViewMode('CREATE_LESSON_NOTE');
+        break;
+      case ToolId.NOTE_SUMMARIZER:
+        setViewMode('CREATE_NOTE_SUMMARY');
         break;
     }
   };
@@ -310,15 +329,8 @@ const App: React.FC = () => {
 
           <div className="flex items-center gap-4">
             
-            {/* Navigation Links */}
+            {/* Primary Action */}
             <div className="flex items-center gap-1 mr-2">
-                <button 
-                    onClick={handleOpenDashboard}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'DASHBOARD' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                    <LayoutDashboard size={18} />
-                    <span className="hidden sm:inline">Dashboard</span>
-                </button>
                  <button 
                     onClick={handleCreateNewClick}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode.startsWith('CREATE') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}
@@ -349,21 +361,48 @@ const App: React.FC = () => {
               </div>
             )}
             
-            {/* User Profile */}
-            <div className="flex items-center gap-3 border-l border-slate-200 pl-4 ml-2">
-              <div className="hidden lg:flex flex-col items-end">
-                <span className="text-sm font-semibold text-slate-700">{user.name}</span>
-              </div>
-              <div className="h-9 w-9 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold border border-indigo-200">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
+            {/* User Profile Dropdown */}
+            <div className="relative ml-2" ref={userMenuRef}>
               <button
-                onClick={handleLogout}
-                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Log Out"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 hover:bg-slate-50 p-1.5 pr-2 rounded-full border border-transparent hover:border-slate-100 transition-all outline-none"
               >
-                <LogOut size={20} />
+                <div className="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold border border-indigo-200">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="hidden md:flex flex-col items-start">
+                    <span className="text-sm font-semibold text-slate-700 leading-none">{user.name}</span>
+                </div>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
               </button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-4 py-2 border-b border-slate-50 md:hidden">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{user.name}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleOpenDashboard();
+                      setIsUserMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 flex items-center gap-2 text-slate-700 hover:bg-slate-50 transition-colors text-sm font-medium"
+                  >
+                    <LayoutDashboard size={16} className="text-slate-500" />
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsUserMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 flex items-center gap-2 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium border-t border-slate-50"
+                  >
+                    <LogOut size={16} />
+                    Log Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -409,6 +448,20 @@ const App: React.FC = () => {
         {viewMode === 'CREATE_ICEBREAKER' && (
             <div className="animate-fade-in">
                 <IcebreakerGenerator onBack={handleCreateNewClick} />
+            </div>
+        )}
+
+        {/* VIEW: LESSON NOTE MAKER */}
+        {viewMode === 'CREATE_LESSON_NOTE' && (
+            <div className="animate-fade-in">
+                <LessonNoteMaker onBack={handleCreateNewClick} />
+            </div>
+        )}
+
+        {/* VIEW: NOTE SUMMARIZER */}
+        {viewMode === 'CREATE_NOTE_SUMMARY' && (
+            <div className="animate-fade-in">
+                <NoteSummarizer onBack={handleCreateNewClick} />
             </div>
         )}
 
