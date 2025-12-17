@@ -174,49 +174,55 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Presentation Template Style */}
+                {/* Presentation Style Selector */}
                 <div className="flex-1">
                   <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                    <LayoutTemplate size={16} className="text-indigo-500" /> Template Style
+                    <LayoutTemplate size={16} className="text-indigo-500" /> Presentation Style
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-3">
                     <button
                       onClick={() => setPresentationStyle(PresentationStyle.STANDARD)}
-                      className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all aspect-[4/3] ${
                         presentationStyle === PresentationStyle.STANDARD
-                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                          ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
+                          : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                       title="Content Slide: Balanced text and details"
                     >
-                      <FileText size={18} className="mb-1" />
-                      <span className="text-xs font-medium">Content</span>
+                      <div className="p-2 bg-white rounded-lg shadow-sm mb-2 border border-slate-100">
+                        <FileText size={20} className={presentationStyle === PresentationStyle.STANDARD ? "text-indigo-600" : "text-slate-400"} />
+                      </div>
+                      <span className="text-xs font-semibold">Content</span>
                     </button>
                     
                     <button
                       onClick={() => setPresentationStyle(PresentationStyle.VISUAL)}
-                      className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all aspect-[4/3] ${
                         presentationStyle === PresentationStyle.VISUAL
-                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                          ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
+                          : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                       title="Image Slide: Concise text with image descriptions"
                     >
-                      <ImageIcon size={18} className="mb-1" />
-                      <span className="text-xs font-medium">Image</span>
+                      <div className="p-2 bg-white rounded-lg shadow-sm mb-2 border border-slate-100">
+                        <ImageIcon size={20} className={presentationStyle === PresentationStyle.VISUAL ? "text-indigo-600" : "text-slate-400"} />
+                      </div>
+                      <span className="text-xs font-semibold">Image</span>
                     </button>
 
                     <button
                       onClick={() => setPresentationStyle(PresentationStyle.MINIMALIST)}
-                      className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all aspect-[4/3] ${
                         presentationStyle === PresentationStyle.MINIMALIST
-                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                          ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
+                          : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                       title="Title Slide: Large text, minimal points"
                     >
-                      <Type size={18} className="mb-1" />
-                      <span className="text-xs font-medium">Title</span>
+                      <div className="p-2 bg-white rounded-lg shadow-sm mb-2 border border-slate-100">
+                        <Type size={20} className={presentationStyle === PresentationStyle.MINIMALIST ? "text-indigo-600" : "text-slate-400"} />
+                      </div>
+                      <span className="text-xs font-semibold">Title</span>
                     </button>
                   </div>
                 </div>

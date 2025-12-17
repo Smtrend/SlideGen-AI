@@ -96,24 +96,25 @@ export const generateSlidesFromText = async (
     case PresentationStyle.VISUAL:
       styleInstruction = `
         STYLE GUIDE: "Visual / Image Focused"
-        - Keep bullet points very short and concise (max 5-8 words).
-        - Focus on creating space for the accompanying image (which you will describe in the imagePrompt).
+        - LAYOUT: Image takes 50% of the slide.
+        - CONTENT: Bullet points MUST be very short and concise (max 5-8 words). 
+        - FOCUS: Prioritize visual impact over text density.
       `;
       break;
     case PresentationStyle.MINIMALIST:
       styleInstruction = `
         STYLE GUIDE: "Minimalist / Title Slides"
-        - Use very few words. 
-        - Focus on big ideas and punchy headlines.
-        - Max 2-3 bullet points per slide.
+        - LAYOUT: Center aligned, large text.
+        - CONTENT: Use very few words. Max 2-3 bullet points per slide.
+        - FOCUS: Punchy headlines and big ideas.
       `;
       break;
     case PresentationStyle.STANDARD:
     default:
       styleInstruction = `
         STYLE GUIDE: "Standard Content"
-        - Balance of information and readability.
-        - Detailed enough to stand alone.
+        - LAYOUT: Balanced text and details.
+        - CONTENT: Detailed enough to stand alone.
       `;
       break;
   }
