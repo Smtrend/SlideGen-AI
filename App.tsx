@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Presentation, Wand2, Download, Layers, AlertCircle, FileText, Loader2, Plus, Sparkles, LayoutTemplate, Image as ImageIcon, Type, Palette } from 'lucide-react';
-import { Slide, GenerationMode, PresentationStyle, PPTXThemeId, SlideTransition } from './types';
+import { Presentation, Wand2, Download, Layers, AlertCircle, FileText, Loader2, Plus, Sparkles, LayoutTemplate, Image as ImageIcon, Type, Palette, Feather, Circle, Diamond } from 'lucide-react';
+import { Slide, GenerationMode, PresentationStyle, PPTXThemeId, SlideTransition, ImageQuality } from './types';
 import { generateSlidesFromText } from './services/geminiService';
 import { downloadPPTX, THEMES } from './services/pptxService';
 import { SlideCard } from './components/SlideCard';
@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [generationMode, setGenerationMode] = useState<GenerationMode>(GenerationMode.ORGANIZE);
   const [presentationStyle, setPresentationStyle] = useState<PresentationStyle>(PresentationStyle.STANDARD);
+  const [imageQuality, setImageQuality] = useState<ImageQuality>(ImageQuality.MEDIUM);
   const [currentTheme, setCurrentTheme] = useState<PPTXThemeId>(PPTXThemeId.CORPORATE_BLUE);
   const [error, setError] = useState<string | null>(null);
   
@@ -37,7 +38,7 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      const response = await generateSlidesFromText(inputText, generationMode, presentationStyle);
+      const response = await generateSlidesFromText(inputText, generationMode, presentationStyle, imageQuality);
       
       const newSlides: Slide[] = response.slides.map(s => ({
         id: uuidv4(),
@@ -179,53 +180,107 @@ const App: React.FC = () => {
                   <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                     <LayoutTemplate size={16} className="text-indigo-500" /> Presentation Style
                   </label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => setPresentationStyle(PresentationStyle.STANDARD)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all aspect-[4/3] ${
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all aspect-[4/3] ${
                         presentationStyle === PresentationStyle.STANDARD
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                       title="Content Slide: Balanced text and details"
                     >
-                      <div className="p-2 bg-white rounded-lg shadow-sm mb-2 border border-slate-100">
-                        <FileText size={20} className={presentationStyle === PresentationStyle.STANDARD ? "text-indigo-600" : "text-slate-400"} />
+                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
+                        <FileText size={16} className={presentationStyle === PresentationStyle.STANDARD ? "text-indigo-600" : "text-slate-400"} />
                       </div>
-                      <span className="text-xs font-semibold">Content</span>
+                      <span className="text-[10px] sm:text-xs font-semibold">Content</span>
                     </button>
                     
                     <button
                       onClick={() => setPresentationStyle(PresentationStyle.VISUAL)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all aspect-[4/3] ${
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all aspect-[4/3] ${
                         presentationStyle === PresentationStyle.VISUAL
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                       title="Image Slide: Concise text with image descriptions"
                     >
-                      <div className="p-2 bg-white rounded-lg shadow-sm mb-2 border border-slate-100">
-                        <ImageIcon size={20} className={presentationStyle === PresentationStyle.VISUAL ? "text-indigo-600" : "text-slate-400"} />
+                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
+                        <ImageIcon size={16} className={presentationStyle === PresentationStyle.VISUAL ? "text-indigo-600" : "text-slate-400"} />
                       </div>
-                      <span className="text-xs font-semibold">Image</span>
+                      <span className="text-[10px] sm:text-xs font-semibold">Image</span>
                     </button>
 
                     <button
                       onClick={() => setPresentationStyle(PresentationStyle.MINIMALIST)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all aspect-[4/3] ${
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all aspect-[4/3] ${
                         presentationStyle === PresentationStyle.MINIMALIST
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                       title="Title Slide: Large text, minimal points"
                     >
-                      <div className="p-2 bg-white rounded-lg shadow-sm mb-2 border border-slate-100">
-                        <Type size={20} className={presentationStyle === PresentationStyle.MINIMALIST ? "text-indigo-600" : "text-slate-400"} />
+                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
+                        <Type size={16} className={presentationStyle === PresentationStyle.MINIMALIST ? "text-indigo-600" : "text-slate-400"} />
                       </div>
-                      <span className="text-xs font-semibold">Title</span>
+                      <span className="text-[10px] sm:text-xs font-semibold">Title</span>
                     </button>
                   </div>
                 </div>
+
+                {/* Image Quality Selector */}
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                    <Sparkles size={16} className="text-indigo-500" /> Image Quality
+                  </label>
+                   <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setImageQuality(ImageQuality.LOW)}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all aspect-[4/3] ${
+                        imageQuality === ImageQuality.LOW
+                          ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
+                          : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                      title="Low Quality: Simple, minimalist sketches"
+                    >
+                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
+                        <Feather size={16} className={imageQuality === ImageQuality.LOW ? "text-indigo-600" : "text-slate-400"} />
+                      </div>
+                      <span className="text-[10px] sm:text-xs font-semibold">Simple</span>
+                    </button>
+
+                    <button
+                      onClick={() => setImageQuality(ImageQuality.MEDIUM)}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all aspect-[4/3] ${
+                        imageQuality === ImageQuality.MEDIUM
+                          ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
+                          : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                      title="Medium Quality: Standard clean vector art"
+                    >
+                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
+                        <Layers size={16} className={imageQuality === ImageQuality.MEDIUM ? "text-indigo-600" : "text-slate-400"} />
+                      </div>
+                      <span className="text-[10px] sm:text-xs font-semibold">Standard</span>
+                    </button>
+
+                     <button
+                      onClick={() => setImageQuality(ImageQuality.HIGH)}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all aspect-[4/3] ${
+                        imageQuality === ImageQuality.HIGH
+                          ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
+                          : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                      title="High Quality: Intricate, highly detailed 4k art"
+                    >
+                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
+                        <Diamond size={16} className={imageQuality === ImageQuality.HIGH ? "text-indigo-600" : "text-slate-400"} />
+                      </div>
+                      <span className="text-[10px] sm:text-xs font-semibold">High</span>
+                    </button>
+                   </div>
+                </div>
+
               </div>
 
               {/* Text Area */}

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { GenerationMode, SlideResponse, PresentationStyle } from "../types";
+import { GenerationMode, SlideResponse, PresentationStyle, ImageQuality } from "../types";
 
 const initializeGenAI = () => {
   if (!process.env.API_KEY) {
@@ -8,12 +8,29 @@ const initializeGenAI = () => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
-const generateSlideImage = async (ai: GoogleGenAI, prompt: string): Promise<string | undefined> => {
+const generateSlideImage = async (ai: GoogleGenAI, prompt: string, quality: ImageQuality): Promise<string | undefined> => {
   try {
+    let qualityDescriptors = "";
+    
+    switch (quality) {
+      case ImageQuality.LOW:
+        qualityDescriptors = "simple, basic, minimalist, outline style, flat color, low detail";
+        break;
+      case ImageQuality.HIGH:
+        qualityDescriptors = "highly detailed, 4k, vibrant, intricate, masterpiece, professional shading, depth";
+        break;
+      case ImageQuality.MEDIUM:
+      default:
+        qualityDescriptors = "standard vector style, clean, balanced detail";
+        break;
+    }
+
+    const fullPrompt = `Create a ${qualityDescriptors} flat vector illustration style presentation slide image for: ${prompt}. White background, corporate style.`;
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
-        parts: [{ text: `Create a flat vector illustration style presentation slide image for: ${prompt}. White background, minimalist, corporate style.` }],
+        parts: [{ text: fullPrompt }],
       },
     });
 
@@ -32,7 +49,8 @@ const generateSlideImage = async (ai: GoogleGenAI, prompt: string): Promise<stri
 export const generateSlidesFromText = async (
   text: string,
   mode: GenerationMode,
-  style: PresentationStyle
+  style: PresentationStyle,
+  imageQuality: ImageQuality
 ): Promise<SlideResponse> => {
   const ai = initializeGenAI();
 
@@ -144,7 +162,7 @@ export const generateSlidesFromText = async (
     // Generate images for each slide in parallel
     const slidesWithImages = await Promise.all(
       parsedResponse.slides.map(async (slide) => {
-        const generatedImage = await generateSlideImage(ai, slide.imagePrompt);
+        const generatedImage = await generateSlideImage(ai, slide.imagePrompt, imageQuality);
         return {
           ...slide,
           image: generatedImage

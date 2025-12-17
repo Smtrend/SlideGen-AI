@@ -28,6 +28,12 @@ export enum PresentationStyle {
   MINIMALIST = 'MINIMALIST' // Very concise, punchy text (Title Slide style)
 }
 
+export enum ImageQuality {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH'
+}
+
 export enum PPTXThemeId {
   CORPORATE_BLUE = 'CORPORATE_BLUE',
   MODERN_GREEN = 'MODERN_GREEN',
