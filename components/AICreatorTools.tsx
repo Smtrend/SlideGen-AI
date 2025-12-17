@@ -348,4 +348,42 @@ export const IcebreakerGenerator = ({ onBack }: { onBack: () => void }) => {
               disabled={isLoading || !context}
               className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 mt-4"
             >
-              {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 size={20
+              {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 size={20} />} Generate Activity
+            </button>
+          </div>
+        </div>
+      ) : (
+        <ResultCard title={result.title} onCopy={copyText}>
+           <div className="flex items-center gap-2 mb-6">
+             <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-medium">{result.duration}</span>
+           </div>
+           
+           <div className="space-y-6">
+             <div>
+                <h4 className="font-bold text-lg mb-2 text-emerald-800">Instructions</h4>
+                <ol className="list-decimal pl-5 space-y-2 text-slate-700">
+                    {result.instructions.map((inst, i) => <li key={i}>{inst}</li>)}
+                </ol>
+             </div>
+             
+             <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                <h4 className="font-bold text-sm text-slate-900 mb-1">Why it works</h4>
+                <p className="text-slate-600 text-sm">{result.whyItWorks}</p>
+             </div>
+
+             {result.materials.length > 0 && (
+                <div>
+                    <h4 className="font-bold text-sm text-slate-900 mb-1">Materials Needed</h4>
+                    <p className="text-slate-600 text-sm">{result.materials.join(', ')}</p>
+                </div>
+             )}
+           </div>
+
+           <button onClick={() => setResult(null)} className="text-emerald-600 font-medium hover:underline mt-6 block">
+                Generate Another
+            </button>
+        </ResultCard>
+      )}
+    </div>
+  );
+};
