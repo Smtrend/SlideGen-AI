@@ -9,6 +9,7 @@ import { SlideCard } from './components/SlideCard';
 import { SlideEditor } from './components/SlideEditor';
 import { ThemeSelector } from './components/ThemeSelector';
 import { AuthScreen } from './components/AuthScreen';
+import { LandingPage } from './components/LandingPage';
 import { Dashboard } from './components/Dashboard';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -25,6 +26,7 @@ const App: React.FC = () => {
   // Auth State
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showLanding, setShowLanding] = useState(true);
 
   // App Navigation State
   const [viewMode, setViewMode] = useState<ViewMode>('DASHBOARD');
@@ -61,6 +63,7 @@ const App: React.FC = () => {
     if (currentUser) {
       setUser(currentUser);
       loadPresentations(currentUser.id);
+      setShowLanding(false); // Skip landing if logged in
     }
     setAuthLoading(false);
   }, []);
@@ -90,6 +93,7 @@ const App: React.FC = () => {
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
+    setShowLanding(false);
     loadPresentations(loggedInUser.id);
     setViewMode('DASHBOARD');
   };
@@ -100,6 +104,7 @@ const App: React.FC = () => {
     setSlides([]);
     setInputText("");
     setCurrentPresentationId(null);
+    setShowLanding(true); // Go back to landing page on logout
     setViewMode('DASHBOARD');
   };
 
@@ -278,10 +283,25 @@ const App: React.FC = () => {
     );
   }
 
+  // Determine which unauthenticated screen to show
   if (!user) {
-    return <AuthScreen onLogin={handleLogin} />;
+    if (showLanding) {
+      return (
+        <LandingPage 
+          onGetStarted={() => setShowLanding(false)} 
+          onLogin={() => setShowLanding(false)}
+        />
+      );
+    }
+    return (
+      <AuthScreen 
+        onLogin={handleLogin} 
+        onBack={() => setShowLanding(true)}
+      />
+    );
   }
 
+  // Authenticated View
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       {/* Navbar */}

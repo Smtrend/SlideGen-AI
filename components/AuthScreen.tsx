@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Presentation, Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Presentation, Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { authService } from '../services/authService';
 import { User } from '../types';
 
 interface AuthScreenProps {
   onLogin: (user: User) => void;
+  onBack: () => void;
 }
 
-export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
+export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onBack }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +41,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 relative animate-fade-in-up">
+        
+        <button 
+          onClick={onBack}
+          className="absolute top-4 left-4 z-20 p-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition-colors"
+          title="Back to Home"
+        >
+          <ArrowLeft size={20} />
+        </button>
+
         {/* Header with Background Image */}
         <div className="relative p-10 text-center overflow-hidden group">
           {/* Background Image: Meeting/Presentation Context */}
