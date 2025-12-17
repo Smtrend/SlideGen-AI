@@ -8,6 +8,22 @@ export interface Slide {
   transition?: SlideTransition;
 }
 
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface Presentation {
+  id: string;
+  userId: string;
+  title: string;
+  slides: Slide[];
+  themeId: PPTXThemeId;
+  createdAt: number;
+  lastModified: number;
+}
+
 export enum SlideTransition {
   NONE = 'none',
   FADE = 'fade',
@@ -15,6 +31,7 @@ export enum SlideTransition {
   WIPE = 'wipe',
   COVER = 'cover',
   UNCOVER = 'uncover'
+
 }
 
 export enum GenerationMode {

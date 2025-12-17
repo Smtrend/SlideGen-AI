@@ -44,7 +44,9 @@ export const downloadPPTX = (slides: Slide[], themeId: PPTXThemeId = PPTXThemeId
       
     // If the user explicitly selected "none", we don't set transition, otherwise we default to fade or the selected one.
     if (slide.transition !== SlideTransition.NONE) {
-        slideObj.transition = { type: transitionType as any, duration: 1000 };
+        // PptxGenJS duration is in seconds.
+        // Fix: Cast to any as 'transition' property might be missing in strict type definitions
+        (slideObj as any).transition = { type: transitionType as any, duration: 1.0 };
     }
     
     // Add Title
@@ -71,7 +73,8 @@ export const downloadPPTX = (slides: Slide[], themeId: PPTXThemeId = PPTXThemeId
         fontSize: 18,
         fontFace: "Arial",
         color: theme.text,
-        bullet: { code: "2022", color: theme.accent }, // Theme accent bullet
+        // Fix: Removed 'color' property from bullet object as it is not strictly typed in pptxgenjs types
+        bullet: { code: "2022" },
         lineSpacing: 30,
       });
 
@@ -96,7 +99,8 @@ export const downloadPPTX = (slides: Slide[], themeId: PPTXThemeId = PPTXThemeId
         fontSize: 18,
         fontFace: "Arial",
         color: theme.text,
-        bullet: { code: "2022", color: theme.accent }, // Theme accent bullet
+        // Fix: Removed 'color' property from bullet object as it is not strictly typed in pptxgenjs types
+        bullet: { code: "2022" },
         lineSpacing: 30,
       });
     }

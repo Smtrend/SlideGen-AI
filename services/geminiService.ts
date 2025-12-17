@@ -10,22 +10,23 @@ const initializeGenAI = () => {
 
 const generateSlideImage = async (ai: GoogleGenAI, prompt: string, quality: ImageQuality): Promise<string | undefined> => {
   try {
-    let qualityDescriptors = "";
+    let fullPrompt = "";
     
     switch (quality) {
       case ImageQuality.LOW:
-        qualityDescriptors = "simple, basic, minimalist, outline style, flat color, low detail";
+        // Simple, cartoonish, outline style
+        fullPrompt = `Create a simple, basic, minimalist, cartoonish, outline only, flat colors, low detail flat vector illustration style presentation slide image for: ${prompt}. White background, corporate style.`;
         break;
       case ImageQuality.HIGH:
-        qualityDescriptors = "highly detailed, 4k, vibrant, intricate, masterpiece, professional shading, depth";
+        // Photorealistic, cinematic, intricate - we remove 'flat vector' to allow for depth and realism
+        fullPrompt = `Create a highly detailed, 4k, vibrant, intricate details, masterpiece, professional shading, depth of field, cinematic lighting, photorealistic presentation slide image for: ${prompt}. White background, corporate style.`;
         break;
       case ImageQuality.MEDIUM:
       default:
-        qualityDescriptors = "standard vector style, clean, balanced detail";
+        // Standard balanced vector
+        fullPrompt = `Create a standard vector style, clean, balanced detail flat vector illustration style presentation slide image for: ${prompt}. White background, corporate style.`;
         break;
     }
-
-    const fullPrompt = `Create a ${qualityDescriptors} flat vector illustration style presentation slide image for: ${prompt}. White background, corporate style.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',

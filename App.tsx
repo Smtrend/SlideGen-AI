@@ -1,14 +1,33 @@
-import React, { useState, useCallback } from 'react';
-import { Presentation, Wand2, Download, Layers, AlertCircle, FileText, Loader2, Plus, Sparkles, LayoutTemplate, Image as ImageIcon, Type, Palette, Feather, Circle, Diamond } from 'lucide-react';
-import { Slide, GenerationMode, PresentationStyle, PPTXThemeId, SlideTransition, ImageQuality } from './types';
+import React, { useState, useEffect } from 'react';
+import { Presentation as PresentationIcon, Wand2, Download, Layers, AlertCircle, FileText, Loader2, Plus, Sparkles, LayoutTemplate, Image as ImageIcon, Type, Palette, Feather, Diamond, LogOut, LayoutDashboard, Save } from 'lucide-react';
+import { Slide, GenerationMode, PresentationStyle, PPTXThemeId, SlideTransition, ImageQuality, User, Presentation } from './types';
 import { generateSlidesFromText } from './services/geminiService';
 import { downloadPPTX, THEMES } from './services/pptxService';
+import { authService } from './services/authService';
+import { presentationService } from './services/presentationService';
 import { SlideCard } from './components/SlideCard';
 import { SlideEditor } from './components/SlideEditor';
 import { ThemeSelector } from './components/ThemeSelector';
+import { AuthScreen } from './components/AuthScreen';
+import { Dashboard } from './components/Dashboard';
 import { v4 as uuidv4 } from 'uuid';
 
+type ViewMode = 'DASHBOARD' | 'CREATE' | 'EDIT';
+
 const App: React.FC = () => {
+  // Auth State
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // App Navigation State
+  const [viewMode, setViewMode] = useState<ViewMode>('DASHBOARD');
+
+  // Dashboard Data State
+  const [presentations, setPresentations] = useState<Presentation[]>([]);
+  const [loadingPresentations, setLoadingPresentations] = useState(false);
+
+  // Editor/Generator State
+  const [currentPresentationId, setCurrentPresentationId] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [slides, setSlides] = useState<Slide[]>([]);
@@ -17,10 +36,109 @@ const App: React.FC = () => {
   const [imageQuality, setImageQuality] = useState<ImageQuality>(ImageQuality.MEDIUM);
   const [currentTheme, setCurrentTheme] = useState<PPTXThemeId>(PPTXThemeId.CORPORATE_BLUE);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<number | null>(null);
   
-  // Editor State
+  // Slide Modal Editor State
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [currentEditingSlide, setCurrentEditingSlide] = useState<Slide | null>(null);
+
+  // --- Effects ---
+
+  // 1. Check Auth on Mount
+  useEffect(() => {
+    const currentUser = authService.getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
+      loadPresentations(currentUser.id);
+    }
+    setAuthLoading(false);
+  }, []);
+
+  // 2. Load Presentations helper
+  const loadPresentations = async (userId: string) => {
+    setLoadingPresentations(true);
+    try {
+      const data = await presentationService.getUserPresentations(userId);
+      setPresentations(data);
+    } catch (e) {
+      console.error("Failed to load presentations", e);
+    } finally {
+      setLoadingPresentations(false);
+    }
+  };
+
+  // --- Handlers ---
+
+  const handleLogin = (loggedInUser: User) => {
+    setUser(loggedInUser);
+    loadPresentations(loggedInUser.id);
+    setViewMode('DASHBOARD');
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    setUser(null);
+    setSlides([]);
+    setInputText("");
+    setCurrentPresentationId(null);
+    setViewMode('DASHBOARD');
+  };
+
+  const handleCreateNew = () => {
+    setSlides([]);
+    setInputText("");
+    setCurrentPresentationId(null);
+    setCurrentTheme(PPTXThemeId.CORPORATE_BLUE);
+    setError(null);
+    setViewMode('CREATE');
+  };
+
+  const handleOpenDashboard = () => {
+    if (user) {
+      loadPresentations(user.id);
+    }
+    setViewMode('DASHBOARD');
+  };
+
+  const handleOpenPresentation = (presentation: Presentation) => {
+    setSlides(presentation.slides);
+    setCurrentPresentationId(presentation.id);
+    setCurrentTheme(presentation.themeId);
+    setViewMode('EDIT');
+    setLastSaved(presentation.lastModified);
+  };
+
+  const handleDeletePresentation = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this presentation?")) {
+      await presentationService.deletePresentation(id);
+      if (user) loadPresentations(user.id);
+    }
+  };
+
+  const saveCurrentWork = async (manual = false) => {
+    if (!user || slides.length === 0) return;
+    
+    setIsSaving(true);
+    try {
+      const savedPresentation = await presentationService.savePresentation(
+        user.id,
+        currentPresentationId,
+        slides,
+        currentTheme
+      );
+      setCurrentPresentationId(savedPresentation.id);
+      setLastSaved(Date.now());
+      if (manual) {
+        // Maybe show a toast
+      }
+    } catch (e) {
+      console.error("Failed to save", e);
+      setError("Failed to save progress.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!inputText.trim()) {
@@ -28,7 +146,6 @@ const App: React.FC = () => {
       return;
     }
     
-    // Check for API Key at runtime
     if (!process.env.API_KEY) {
       setError("API Key is missing. Please configuration your environment.");
       return;
@@ -45,11 +162,20 @@ const App: React.FC = () => {
         title: s.title,
         bullets: s.bullets,
         speakerNotes: s.speakerNotes,
-        image: s.image, // Map the AI generated image
-        transition: SlideTransition.FADE // Default transition
+        image: s.image,
+        transition: SlideTransition.FADE
       }));
 
       setSlides(newSlides);
+      setViewMode('EDIT'); // Switch to results view
+      
+      // Auto-save the generated result
+      if (user) {
+        const saved = await presentationService.savePresentation(user.id, null, newSlides, currentTheme);
+        setCurrentPresentationId(saved.id);
+        setLastSaved(Date.now());
+      }
+
     } catch (err: any) {
       setError(err.message || "Something went wrong while generating slides.");
     } finally {
@@ -59,22 +185,44 @@ const App: React.FC = () => {
 
   const handleDownload = () => {
     if (slides.length === 0) return;
-    downloadPPTX(slides, currentTheme, "my-presentation.pptx");
+    const title = slides[0]?.title || "presentation";
+    downloadPPTX(slides, currentTheme, `${title.replace(/\s+/g, '_')}.pptx`);
   };
 
+  // Editor Handlers
   const handleEditSlide = (slide: Slide) => {
     setCurrentEditingSlide(slide);
     setIsEditorOpen(true);
   };
 
   const handleSaveSlide = (updatedSlide: Slide) => {
-    setSlides(slides.map(s => s.id === updatedSlide.id ? updatedSlide : s));
+    const updatedSlides = slides.map(s => s.id === updatedSlide.id ? updatedSlide : s);
+    setSlides(updatedSlides);
     setIsEditorOpen(false);
     setCurrentEditingSlide(null);
+    // Auto save changes to storage
+    // We defer the save call slightly to allow state update or just call save logic with new data
+    // For simplicity, we can just call the save function but it relies on 'slides' state which might not be updated yet in closure
+    // Better to pass data directly or use effect. Let's force a save with new data.
+    if(user) {
+        presentationService.savePresentation(user.id, currentPresentationId, updatedSlides, currentTheme)
+            .then(p => {
+                setCurrentPresentationId(p.id);
+                setLastSaved(Date.now());
+            });
+    }
   };
 
   const handleDeleteSlide = (id: string) => {
-    setSlides(slides.filter(s => s.id !== id));
+    const updatedSlides = slides.filter(s => s.id !== id);
+    setSlides(updatedSlides);
+    if(user) {
+        presentationService.savePresentation(user.id, currentPresentationId, updatedSlides, currentTheme)
+        .then(p => {
+            setCurrentPresentationId(p.id);
+            setLastSaved(Date.now());
+        });
+    }
   };
 
   const handleAddNewSlide = () => {
@@ -85,57 +233,138 @@ const App: React.FC = () => {
       speakerNotes: "Add your speaker notes here.",
       transition: SlideTransition.FADE
     };
-    setSlides([...slides, newSlide]);
+    const updatedSlides = [...slides, newSlide];
+    setSlides(updatedSlides);
+    if(user) {
+        presentationService.savePresentation(user.id, currentPresentationId, updatedSlides, currentTheme)
+        .then(p => {
+            setCurrentPresentationId(p.id);
+            setLastSaved(Date.now());
+        });
+    }
   };
 
-  const handleReset = () => {
-    setSlides([]);
-    setError(null);
-    setInputText("");
-  };
+  const handleThemeChange = (newTheme: PPTXThemeId) => {
+    setCurrentTheme(newTheme);
+    if(user && slides.length > 0) {
+        presentationService.savePresentation(user.id, currentPresentationId, slides, newTheme)
+        .then(p => {
+            setCurrentPresentationId(p.id);
+            setLastSaved(Date.now());
+        });
+    }
+  }
+
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="animate-spin text-indigo-600" size={48} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       {/* Navbar */}
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={handleOpenDashboard}>
             <div className="bg-indigo-600 p-2 rounded-lg">
-              <Presentation className="text-white" size={24} />
+              <PresentationIcon className="text-white" size={24} />
             </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 hidden sm:inline">
               SlideGen AI
             </span>
           </div>
-          {slides.length > 0 && (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <ThemeSelector 
-                currentTheme={currentTheme}
-                onThemeChange={setCurrentTheme}
-              />
+
+          <div className="flex items-center gap-4">
+            
+            {/* Navigation Links */}
+            <div className="flex items-center gap-1 mr-2">
+                <button 
+                    onClick={handleOpenDashboard}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'DASHBOARD' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                    <LayoutDashboard size={18} />
+                    <span className="hidden sm:inline">Dashboard</span>
+                </button>
+                 <button 
+                    onClick={handleCreateNew}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'CREATE' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                    <Plus size={18} />
+                    <span className="hidden sm:inline">New</span>
+                </button>
+            </div>
+
+            {/* Action Buttons for Edit Mode */}
+            {viewMode === 'EDIT' && slides.length > 0 && (
+              <div className="flex items-center gap-2 sm:gap-3 border-l border-slate-200 pl-4">
+                <div className="hidden md:flex items-center gap-2 text-xs text-slate-400 mr-2">
+                    {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                    {isSaving ? 'Saving...' : lastSaved ? 'Saved' : ''}
+                </div>
+                <ThemeSelector 
+                  currentTheme={currentTheme}
+                  onThemeChange={handleThemeChange}
+                />
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center gap-2 bg-slate-900 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-slate-800 transition-all shadow-sm font-medium"
+                >
+                  <Download size={18} />
+                  <span className="hidden sm:inline">Export</span>
+                </button>
+              </div>
+            )}
+            
+            {/* User Profile */}
+            <div className="flex items-center gap-3 border-l border-slate-200 pl-4 ml-2">
+              <div className="hidden lg:flex flex-col items-end">
+                <span className="text-sm font-semibold text-slate-700">{user.name}</span>
+              </div>
+              <div className="h-9 w-9 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold border border-indigo-200">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
               <button
-                onClick={handleDownload}
-                className="flex items-center gap-2 bg-slate-900 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-slate-800 transition-all shadow-sm font-medium"
+                onClick={handleLogout}
+                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Log Out"
               >
-                <Download size={18} />
-                <span className="hidden sm:inline">Export PPTX</span>
+                <LogOut size={20} />
               </button>
             </div>
-          )}
+          </div>
         </div>
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* State 1: Empty or Input State */}
-        {slides.length === 0 ? (
+        {/* VIEW: DASHBOARD */}
+        {viewMode === 'DASHBOARD' && (
+            <Dashboard 
+                presentations={presentations}
+                isLoading={loadingPresentations}
+                onOpenPresentation={handleOpenPresentation}
+                onDeletePresentation={handleDeletePresentation}
+                onCreateNew={handleCreateNew}
+            />
+        )}
+
+        {/* VIEW: CREATE (Input) */}
+        {viewMode === 'CREATE' && (
           <div className="max-w-3xl mx-auto animate-fade-in">
             <div className="text-center mb-10">
               <h1 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-                Turn Text into <span className="text-indigo-600">Presentations</span> in Seconds
+                New <span className="text-indigo-600">Presentation</span>
               </h1>
               <p className="text-lg text-slate-600">
-                Paste your notes, articles, or rough ideas below. Our AI will structure them into professional slides automatically.
+                Paste your content below and let our AI handle the design structure.
               </p>
             </div>
 
@@ -178,7 +407,7 @@ const App: React.FC = () => {
                 {/* Presentation Style Selector */}
                 <div className="flex-1">
                   <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                    <LayoutTemplate size={16} className="text-indigo-500" /> Presentation Style
+                    <LayoutTemplate size={16} className="text-indigo-500" /> Style
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     <button
@@ -188,12 +417,9 @@ const App: React.FC = () => {
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
-                      title="Content Slide: Balanced text and details"
                     >
-                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
-                        <FileText size={16} className={presentationStyle === PresentationStyle.STANDARD ? "text-indigo-600" : "text-slate-400"} />
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-semibold">Content</span>
+                      <FileText size={16} className={presentationStyle === PresentationStyle.STANDARD ? "text-indigo-600" : "text-slate-400"} />
+                      <span className="text-[10px] mt-1 font-semibold">Content</span>
                     </button>
                     
                     <button
@@ -203,12 +429,9 @@ const App: React.FC = () => {
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
-                      title="Image Slide: Concise text with image descriptions"
                     >
-                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
-                        <ImageIcon size={16} className={presentationStyle === PresentationStyle.VISUAL ? "text-indigo-600" : "text-slate-400"} />
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-semibold">Image</span>
+                      <ImageIcon size={16} className={presentationStyle === PresentationStyle.VISUAL ? "text-indigo-600" : "text-slate-400"} />
+                      <span className="text-[10px] mt-1 font-semibold">Visual</span>
                     </button>
 
                     <button
@@ -218,12 +441,9 @@ const App: React.FC = () => {
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
-                      title="Title Slide: Large text, minimal points"
                     >
-                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
-                        <Type size={16} className={presentationStyle === PresentationStyle.MINIMALIST ? "text-indigo-600" : "text-slate-400"} />
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-semibold">Title</span>
+                      <Type size={16} className={presentationStyle === PresentationStyle.MINIMALIST ? "text-indigo-600" : "text-slate-400"} />
+                      <span className="text-[10px] mt-1 font-semibold">Title</span>
                     </button>
                   </div>
                 </div>
@@ -231,7 +451,7 @@ const App: React.FC = () => {
                 {/* Image Quality Selector */}
                 <div className="flex-1">
                   <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                    <Sparkles size={16} className="text-indigo-500" /> Image Quality
+                    <Sparkles size={16} className="text-indigo-500" /> Art Style
                   </label>
                    <div className="grid grid-cols-3 gap-2">
                     <button
@@ -241,12 +461,9 @@ const App: React.FC = () => {
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
-                      title="Low Quality: Simple, minimalist sketches"
                     >
-                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
-                        <Feather size={16} className={imageQuality === ImageQuality.LOW ? "text-indigo-600" : "text-slate-400"} />
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-semibold">Simple</span>
+                      <Feather size={16} className={imageQuality === ImageQuality.LOW ? "text-indigo-600" : "text-slate-400"} />
+                      <span className="text-[10px] mt-1 font-semibold">Simple</span>
                     </button>
 
                     <button
@@ -256,12 +473,9 @@ const App: React.FC = () => {
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
-                      title="Medium Quality: Standard clean vector art"
                     >
-                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
-                        <Layers size={16} className={imageQuality === ImageQuality.MEDIUM ? "text-indigo-600" : "text-slate-400"} />
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-semibold">Standard</span>
+                      <Layers size={16} className={imageQuality === ImageQuality.MEDIUM ? "text-indigo-600" : "text-slate-400"} />
+                      <span className="text-[10px] mt-1 font-semibold">Standard</span>
                     </button>
 
                      <button
@@ -271,12 +485,9 @@ const App: React.FC = () => {
                           ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
                       }`}
-                      title="High Quality: Intricate, highly detailed 4k art"
                     >
-                      <div className="p-1.5 bg-white rounded-lg shadow-sm mb-1 border border-slate-100">
-                        <Diamond size={16} className={imageQuality === ImageQuality.HIGH ? "text-indigo-600" : "text-slate-400"} />
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-semibold">High</span>
+                      <Diamond size={16} className={imageQuality === ImageQuality.HIGH ? "text-indigo-600" : "text-slate-400"} />
+                      <span className="text-[10px] mt-1 font-semibold">Pro</span>
                     </button>
                    </div>
                 </div>
@@ -295,7 +506,7 @@ const App: React.FC = () => {
                   className="w-full h-64 p-4 text-base bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-y transition-shadow"
                 />
                 <div className="absolute bottom-4 right-4 text-xs text-slate-400 font-medium">
-                  {inputText.length} characters (Unlimited)
+                  {inputText.length} chars
                 </div>
               </div>
 
@@ -331,12 +542,16 @@ const App: React.FC = () => {
               </button>
             </div>
           </div>
-        ) : (
-          /* State 2: Results View */
+        )}
+
+        {/* VIEW: EDIT (Results) */}
+        {viewMode === 'EDIT' && (
           <div className="animate-fade-in-up">
             <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Your Presentation</h2>
+                <h2 className="text-2xl font-bold text-slate-900">
+                    {slides.length > 0 ? slides[0].title : "Presentation"}
+                </h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full uppercase">
                     {presentationStyle}
@@ -346,10 +561,10 @@ const App: React.FC = () => {
               </div>
               <div className="flex gap-3">
                  <button
-                  onClick={handleReset}
+                  onClick={handleCreateNew} // Just go to create new instead of reset state entirely
                   className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
                 >
-                  Start Over
+                  Close
                 </button>
                 <button
                   onClick={handleAddNewSlide}
