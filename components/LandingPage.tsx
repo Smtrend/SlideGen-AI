@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Presentation, Wand2, Zap, Layout, ArrowRight, CheckCircle2, Share2, Sparkles } from 'lucide-react';
 
 interface LandingPageProps {
@@ -6,12 +6,28 @@ interface LandingPageProps {
   onLogin: () => void;
 }
 
+const HERO_IMAGES = [
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000",
+  "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=2000",
+  "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000",
+  "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2000"
+];
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
       
       {/* Navbar */}
-      <nav className="fixed w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
+      <nav className="fixed w-full bg-white/90 backdrop-blur-md z-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-indigo-600 p-2 rounded-lg">
@@ -39,37 +55,53 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       </nav>
 
       {/* Hero Section */}
-      <div className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-           <div className="absolute top-20 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl mix-blend-multiply animate-pulse" />
-           <div className="absolute top-40 left-0 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl mix-blend-multiply animate-pulse delay-700" />
+      <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-40 overflow-hidden bg-slate-900">
+        
+        {/* Animated Background Images */}
+        {HERO_IMAGES.map((img, index) => (
+            <div
+                key={img}
+                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
+                index === currentImageIndex ? 'opacity-40' : 'opacity-0'
+                }`}
+                style={{ backgroundImage: `url("${img}")` }}
+            />
+        ))}
+
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-50 z-0" />
+        
+        {/* Animated Orbs */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none z-0">
+           <div className="absolute top-20 right-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl mix-blend-screen animate-pulse" />
+           <div className="absolute top-40 left-0 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl mix-blend-screen animate-pulse delay-700" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-semibold mb-8 animate-fade-in-up">
-            <Sparkles size={14} />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-indigo-200 text-sm font-semibold mb-8 backdrop-blur-sm animate-fade-in-up">
+            <Sparkles size={14} className="text-indigo-400" />
             <span>Now with AI Image Generation</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight mb-8 max-w-4xl mx-auto leading-tight animate-fade-in-up delay-100">
-            Create stunning <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600">presentations</span> from simple text.
+          <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-8 max-w-4xl mx-auto leading-tight animate-fade-in-up delay-100 drop-shadow-lg">
+            Create stunning <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-violet-300 to-indigo-300">presentations</span> from simple text.
           </h1>
           
-          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up delay-200">
+          <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up delay-200">
             Stop spending hours formatting slides. Paste your notes, outlines, or rough ideas, and let our AI organize, design, and visualize your deck in seconds.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
             <button 
               onClick={onGetStarted}
-              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-500 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1 flex items-center justify-center gap-2"
             >
               <Wand2 size={20} />
               Generate Presentation
             </button>
             <button 
               onClick={onGetStarted} // Demo essentially goes to login for now
-              className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold text-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 bg-white/10 text-white border border-white/20 rounded-xl font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
             >
               View Examples
             </button>
@@ -78,7 +110,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       </div>
 
       {/* Feature Grid */}
-      <div className="bg-white py-24 border-y border-slate-100">
+      <div className="bg-white py-24 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">Everything you need to present well</h2>
@@ -171,14 +203,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
 
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="bg-slate-900 p-1.5 rounded-lg">
-              <Presentation className="text-white" size={16} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+            
+            {/* Brand & Credit */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-slate-900 p-1.5 rounded-lg">
+                  <Presentation className="text-white" size={16} />
+                </div>
+                <span className="font-bold text-slate-900">SlideGen AI</span>
+              </div>
+              <p className="text-slate-500 text-sm font-medium">
+                App by Catalyst Learning Field Software Engineers
+              </p>
             </div>
-            <span className="font-bold text-slate-900">SlideGen AI</span>
+
+            {/* Contact Info */}
+            <div className="flex flex-col md:items-end gap-2 text-sm text-slate-600">
+              <div className="flex flex-col md:flex-row gap-4">
+                 <a href="tel:+23470171783" className="hover:text-indigo-600 transition-colors font-medium">Contact: +23470171783</a>
+                 <a href="mailto:sopulumich.catalyst@gmail.com" className="hover:text-indigo-600 transition-colors font-medium">Email: sopulumich.catalyst@gmail.com</a>
+              </div>
+              <p className="text-slate-400 text-xs mt-1">© {new Date().getFullYear()} SlideGen AI. All rights reserved.</p>
+            </div>
           </div>
-          <p className="text-slate-500 text-sm">© {new Date().getFullYear()} SlideGen AI. All rights reserved.</p>
         </div>
       </footer>
     </div>
