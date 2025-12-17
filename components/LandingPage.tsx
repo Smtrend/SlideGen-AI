@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Presentation, Wand2, Zap, Layout, ArrowRight, CheckCircle2, Share2, Sparkles } from 'lucide-react';
+import { Presentation, Wand2, Zap, Layout, ArrowRight, CheckCircle2, Share2, Sparkles, FileText, ScanLine, HelpCircle, BookOpen, Briefcase, Users } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -80,15 +80,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-indigo-200 text-sm font-semibold mb-8 backdrop-blur-sm animate-fade-in-up">
             <Sparkles size={14} className="text-indigo-400" />
-            <span>Now with AI Image Generation</span>
+            <span>AI-Powered Content Generation</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-8 max-w-4xl mx-auto leading-tight animate-fade-in-up delay-100 drop-shadow-lg">
-            Create stunning <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-violet-300 to-indigo-300">presentations</span> from simple text.
+            Everything you need for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-violet-300 to-indigo-300">Presentations & Productivity</span>.
           </h1>
           
           <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up delay-200">
-            Stop spending hours formatting slides. Paste your notes, outlines, or rough ideas, and let our AI organize, design, and visualize your deck in seconds.
+            Empowering professionals, entrepreneurs, and students. Transform raw data into structured insights, professional decks, and automated summaries instantly.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
@@ -97,13 +97,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
               className="w-full sm:w-auto px-8 py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-500 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1 flex items-center justify-center gap-2"
             >
               <Wand2 size={20} />
-              Generate Presentation
+              Start Creating Free
             </button>
             <button 
-              onClick={onGetStarted} // Demo essentially goes to login for now
+              onClick={onGetStarted} 
               className="w-full sm:w-auto px-8 py-4 bg-white/10 text-white border border-white/20 rounded-xl font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
             >
-              View Examples
+              Explore Business Tools
             </button>
           </div>
         </div>
@@ -113,38 +113,68 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       <div className="bg-white py-24 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Everything you need to present well</h2>
-            <p className="text-slate-500 max-w-2xl mx-auto">From structure to style, we handle the heavy lifting so you can focus on your delivery.</p>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">A Multi-Functional AI Suite for Everyone</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto">From the boardroom to the classroom, our AI handles the heavy lifting.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-all group">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition-all group">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
                 <Layout size={24} />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">Smart Organization</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Business Presentations</h3>
               <p className="text-slate-600 leading-relaxed">
-                Paste unstructured text and our AI instantly breaks it down into logical slides, titles, and bullet points.
+                Transform strategy docs or rough ideas into high-impact business decks with professional AI imagery.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-all group">
-              <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center text-violet-600 mb-6 group-hover:scale-110 transition-transform">
-                <Wand2 size={24} />
+            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition-all group">
+              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 transition-transform">
+                <FileText size={24} />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">AI Image Generation</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Professional Note Maker</h3>
               <p className="text-slate-600 leading-relaxed">
-                Don't have images? The AI analyzes your content and generates context-aware illustrations for every slide.
+                Generate structured meeting minutes, project briefs, or study notes that are comprehensive and professional.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-all group">
+            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition-all group">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 mb-6 group-hover:scale-110 transition-transform">
+                <ScanLine size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Smart Summarizer</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Scan long contracts, reports, or handwritten notes to get instant, simplified summaries and actionable tasks.
+              </p>
+            </div>
+
+            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition-all group">
+              <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center text-pink-600 mb-6 group-hover:scale-110 transition-transform">
+                <HelpCircle size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Dynamic Quizzes</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Create engaging training assessments or educational quizzes with detailed explanations in one click.
+              </p>
+            </div>
+
+            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition-all group">
               <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-6 group-hover:scale-110 transition-transform">
+                <BookOpen size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Project & Lesson Planner</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Craft detailed project roadmaps or lesson plans with clear objectives, milestones, and procedures.
+              </p>
+            </div>
+
+            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-xl transition-all group">
+              <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
                 <Share2 size={24} />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">PowerPoint Export</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Versatile Exporting</h3>
               <p className="text-slate-600 leading-relaxed">
-                Download a fully editable .pptx file with speaker notes, layouts, and master slides ready for the boardroom.
+                Export presentations to PowerPoint (.pptx) or copy notes directly into Slack, Email, or Word.
               </p>
             </div>
           </div>
@@ -155,27 +185,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       <div className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
           <div className="p-12 md:w-1/2 flex flex-col justify-center">
-            <h2 className="text-3xl font-bold text-white mb-6">How it works</h2>
+            <h2 className="text-3xl font-bold text-white mb-6">Efficiency for Teams & Individuals</h2>
             <div className="space-y-8">
               <div className="flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold shrink-0">1</div>
                 <div>
-                  <h4 className="text-white font-semibold text-lg">Input your content</h4>
-                  <p className="text-slate-400 mt-1">Paste an article, rough notes, or a topic.</p>
+                  <h4 className="text-white font-semibold text-lg">Pick Your Tool</h4>
+                  <p className="text-slate-400 mt-1">Select from our specialized suite for presentations, planning, or summarizing.</p>
                 </div>
               </div>
               <div className="flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold shrink-0">2</div>
                 <div>
-                  <h4 className="text-white font-semibold text-lg">Customize Style</h4>
-                  <p className="text-slate-400 mt-1">Choose your tone, theme, and art style.</p>
+                  <h4 className="text-white font-semibold text-lg">Input Your Context</h4>
+                  <p className="text-slate-400 mt-1">Paste your raw notes, upload photos of whiteboard sessions, or define a goal.</p>
                 </div>
               </div>
               <div className="flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold shrink-0">3</div>
                 <div>
-                  <h4 className="text-white font-semibold text-lg">Export & Present</h4>
-                  <p className="text-slate-400 mt-1">Get a polished .pptx file in seconds.</p>
+                  <h4 className="text-white font-semibold text-lg">Export & Execute</h4>
+                  <p className="text-slate-400 mt-1">Download your professional results and get back to what matters most.</p>
                 </div>
               </div>
             </div>
@@ -183,7 +213,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
               onClick={onGetStarted}
               className="mt-10 self-start flex items-center gap-2 text-indigo-300 hover:text-white font-semibold transition-colors group"
             >
-              Start Creating Now <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              Get Started Free <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
           <div className="md:w-1/2 bg-indigo-900/50 relative min-h-[400px]">
@@ -215,14 +245,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 <span className="font-bold text-slate-900">SlideGen AI</span>
               </div>
               <p className="text-slate-500 text-sm font-medium">
-                App by Catalyst Learning Field Software Engineers
+                Professional tools for everyone. Developed by Catalyst Learning Field.
               </p>
             </div>
 
             {/* Contact Info */}
             <div className="flex flex-col md:items-end gap-2 text-sm text-slate-600">
               <div className="flex flex-col md:flex-row gap-4">
-                 <a href="tel:+23470171783" className="hover:text-indigo-600 transition-colors font-medium">Contact: +23470171783</a>
+                 <a href="tel:+23470171783" className="hover:text-indigo-600 transition-colors font-medium">Support: +23470171783</a>
                  <a href="mailto:sopulumich.catalyst@gmail.com" className="hover:text-indigo-600 transition-colors font-medium">Email: sopulumich.catalyst@gmail.com</a>
               </div>
               <p className="text-slate-400 text-xs mt-1">© {new Date().getFullYear()} SlideGen AI. All rights reserved.</p>

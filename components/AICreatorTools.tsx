@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { BookOpen, HelpCircle, MessageCircle, Wand2, Copy, Check, Loader2, ArrowLeft, FileText, ScanLine, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { BookOpen, HelpCircle, MessageCircle, Wand2, Copy, Check, Loader2, ArrowLeft, FileText, ScanLine, Upload, Image as ImageIcon, X, Briefcase } from 'lucide-react';
 import { generateLessonPlan, generateQuiz, generateIcebreaker, generateLessonNote, summarizeNote } from '../services/geminiService';
 import { LessonPlan, Quiz, Icebreaker, LessonNote, NoteSummary } from '../types';
 
@@ -43,7 +43,7 @@ const ResultCard = ({ title, children, onCopy }: ResultCardProps) => {
   );
 };
 
-// --- LESSON PLANNER ---
+// --- PLANNER ---
 
 export const LessonPlanner = ({ onBack }: { onBack: () => void }) => {
   const [topic, setTopic] = useState('');
@@ -58,7 +58,7 @@ export const LessonPlanner = ({ onBack }: { onBack: () => void }) => {
       const plan = await generateLessonPlan(topic, grade);
       setResult(plan);
     } catch (e) {
-      alert("Failed to generate lesson plan");
+      alert("Failed to generate plan");
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +66,7 @@ export const LessonPlanner = ({ onBack }: { onBack: () => void }) => {
 
   const copyText = () => {
     if (!result) return;
-    const text = `Title: ${result.title}\nGrade: ${result.gradeLevel}\nDuration: ${result.duration}\n\nObjectives:\n${result.objectives.map(o => `- ${o}`).join('\n')}\n\nProcedure:\n${result.procedure.map(p => `${p.time}: ${p.activity}`).join('\n')}\n\nAssessment:\n${result.assessment}`;
+    const text = `Title: ${result.title}\nContext/Level: ${result.gradeLevel}\nDuration: ${result.duration}\n\nObjectives:\n${result.objectives.map(o => `- ${o}`).join('\n')}\n\nProcedure/Steps:\n${result.procedure.map(p => `${p.time}: ${p.activity}`).join('\n')}\n\nAssessment/Success Metric:\n${result.assessment}`;
     navigator.clipboard.writeText(text);
   };
 
@@ -80,28 +80,28 @@ export const LessonPlanner = ({ onBack }: { onBack: () => void }) => {
         <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
           <div className="flex items-center gap-3 mb-6">
             <div className="bg-purple-100 p-2 rounded-lg text-purple-600">
-              <BookOpen size={24} />
+              <Briefcase size={24} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">Lesson Plan Generator</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Project & Lesson Planner</h2>
           </div>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Topic</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Topic or Project Goal</label>
               <input 
                 value={topic} 
                 onChange={e => setTopic(e.target.value)}
                 className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500 bg-white text-slate-900" 
-                placeholder="e.g. Photosynthesis, The Civil War, Fractions" 
+                placeholder="e.g. Q4 Marketing Strategy, Product Roadmap, Photosynthesis Lesson" 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Grade Level</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Target Level / Audience</label>
               <input 
                 value={grade} 
                 onChange={e => setGrade(e.target.value)}
                 className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500 bg-white text-slate-900" 
-                placeholder="e.g. 5th Grade, High School Biology" 
+                placeholder="e.g. Executive Team, 5th Grade, New Hires" 
               />
             </div>
             <button 
@@ -109,7 +109,7 @@ export const LessonPlanner = ({ onBack }: { onBack: () => void }) => {
               disabled={isLoading || !topic || !grade}
               className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all flex items-center justify-center gap-2 mt-4"
             >
-              {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 size={20} />} Generate Plan
+              {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 size={20} />} Generate Roadmap
             </button>
           </div>
         </div>
@@ -118,19 +118,18 @@ export const LessonPlanner = ({ onBack }: { onBack: () => void }) => {
           <div className="space-y-6 text-slate-800">
             <div className="flex flex-wrap gap-4 text-sm font-medium text-slate-500 border-b border-slate-100 pb-4">
               <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full">{result.gradeLevel}</span>
-              <span className="bg-slate-100 px-3 py-1 rounded-full">{result.subject}</span>
               <span className="bg-slate-100 px-3 py-1 rounded-full">{result.duration}</span>
             </div>
 
             <div>
-              <h4 className="font-bold text-lg mb-2 text-purple-700">Objectives</h4>
+              <h4 className="font-bold text-lg mb-2 text-purple-700">Objectives & Goals</h4>
               <ul className="list-disc pl-5 space-y-1">
                 {result.objectives.map((obj, i) => <li key={i}>{obj}</li>)}
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-lg mb-2 text-purple-700">Procedure</h4>
+              <h4 className="font-bold text-lg mb-2 text-purple-700">Execution Plan</h4>
               <div className="space-y-3">
                 {result.procedure.map((step, i) => (
                   <div key={i} className="flex gap-4 p-3 bg-slate-50 rounded-lg">
@@ -142,13 +141,13 @@ export const LessonPlanner = ({ onBack }: { onBack: () => void }) => {
             </div>
 
             <div>
-               <h4 className="font-bold text-lg mb-2 text-purple-700">Materials & Assessment</h4>
-               <p><strong>Materials:</strong> {result.materials.join(', ')}</p>
-               <p className="mt-2"><strong>Assessment:</strong> {result.assessment}</p>
+               <h4 className="font-bold text-lg mb-2 text-purple-700">Required Resources & Success Metrics</h4>
+               <p><strong>Resources:</strong> {result.materials.join(', ')}</p>
+               <p className="mt-2"><strong>Success Metric:</strong> {result.assessment}</p>
             </div>
             
             <button onClick={() => setResult(null)} className="text-purple-600 font-medium hover:underline mt-4 block">
-                Generate Another
+                Plan Another
             </button>
           </div>
         </ResultCard>
@@ -205,42 +204,42 @@ export const QuizMaker = ({ onBack }: { onBack: () => void }) => {
              <div className="bg-pink-100 p-2 rounded-lg text-pink-600">
               <HelpCircle size={24} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">AI Quiz Generator</h2>
+            <h2 className="text-2xl font-bold text-slate-900">AI Assessment Generator</h2>
           </div>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Topic</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Assessment Topic</label>
               <input 
                 value={topic} 
                 onChange={e => setTopic(e.target.value)}
                 className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900" 
-                placeholder="e.g. World Capitals, Basic Chemistry, 1980s Pop Music" 
+                placeholder="e.g. Sales Training, Product Knowledge, World Capitals" 
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Difficulty</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Complexity</label>
                 <select 
                     value={difficulty}
                     onChange={e => setDifficulty(e.target.value)}
                     className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
                 >
-                    <option>Easy</option>
-                    <option>Medium</option>
-                    <option>Hard</option>
+                    <option>Basic</option>
+                    <option>Intermediate</option>
+                    <option>Advanced</option>
                 </select>
                 </div>
                  <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Questions</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Item Count</label>
                 <select 
                     value={count}
                     onChange={e => setCount(Number(e.target.value))}
                     className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
                 >
-                    <option value={3}>3 Questions</option>
-                    <option value={5}>5 Questions</option>
-                    <option value={10}>10 Questions</option>
+                    <option value={3}>3 Items</option>
+                    <option value={5}>5 Items</option>
+                    <option value={10}>10 Items</option>
                 </select>
                 </div>
             </div>
@@ -249,7 +248,7 @@ export const QuizMaker = ({ onBack }: { onBack: () => void }) => {
               disabled={isLoading || !topic}
               className="w-full py-3 bg-pink-600 text-white rounded-xl font-bold hover:bg-pink-700 transition-all flex items-center justify-center gap-2 mt-4"
             >
-              {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 size={20} />} Generate Quiz
+              {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 size={20} />} Create Assessment
             </button>
           </div>
         </div>
@@ -291,7 +290,7 @@ export const QuizMaker = ({ onBack }: { onBack: () => void }) => {
   );
 };
 
-// --- ICEBREAKER ---
+// --- ENGAGEMENT / ICEBREAKER ---
 
 export const IcebreakerGenerator = ({ onBack }: { onBack: () => void }) => {
   const [context, setContext] = useState('');
@@ -305,7 +304,7 @@ export const IcebreakerGenerator = ({ onBack }: { onBack: () => void }) => {
       const icebreaker = await generateIcebreaker(context);
       setResult(icebreaker);
     } catch (e) {
-      alert("Failed to generate icebreaker");
+      alert("Failed to generate engagement activity");
     } finally {
       setIsLoading(false);
     }
@@ -329,18 +328,18 @@ export const IcebreakerGenerator = ({ onBack }: { onBack: () => void }) => {
             <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600">
               <MessageCircle size={24} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">Icebreaker Generator</h2>
+            <h2 className="text-2xl font-bold text-slate-900">AI Engagement & Icebreakers</h2>
           </div>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Context / Audience</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Meeting Context / Team Dynamic</label>
               <textarea 
                 value={context} 
                 onChange={e => setContext(e.target.value)}
                 rows={3}
                 className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-slate-900" 
-                placeholder="e.g. Remote team meeting for engineers, Kindergarten first day of school, Corporate workshop intro" 
+                placeholder="e.g. Remote project sync, New hire orientation, Board of directors retreat, First day of school" 
               />
             </div>
             <button 
@@ -373,7 +372,7 @@ export const IcebreakerGenerator = ({ onBack }: { onBack: () => void }) => {
 
              {result.materials.length > 0 && (
                 <div>
-                    <h4 className="font-bold text-sm text-slate-900 mb-1">Materials Needed</h4>
+                    <h4 className="font-bold text-sm text-slate-900 mb-1">Resources Needed</h4>
                     <p className="text-slate-600 text-sm">{result.materials.join(', ')}</p>
                 </div>
              )}
@@ -388,7 +387,7 @@ export const IcebreakerGenerator = ({ onBack }: { onBack: () => void }) => {
   );
 };
 
-// --- LESSON NOTE MAKER ---
+// --- STRUCTURED NOTE MAKER ---
 
 export const LessonNoteMaker = ({ onBack }: { onBack: () => void }) => {
   const [topic, setTopic] = useState('');
@@ -404,7 +403,7 @@ export const LessonNoteMaker = ({ onBack }: { onBack: () => void }) => {
       const note = await generateLessonNote(topic, subject, grade);
       setResult(note);
     } catch (e) {
-      alert("Failed to generate lesson notes");
+      alert("Failed to generate structured notes");
     } finally {
       setIsLoading(false);
     }
@@ -412,9 +411,9 @@ export const LessonNoteMaker = ({ onBack }: { onBack: () => void }) => {
 
   const copyText = () => {
     if (!result) return;
-    let text = `Subject: ${result.subject}\nTopic: ${result.topic}\nGrade: ${result.gradeLevel}\n\nIntroduction:\n${result.introduction}\n\n`;
+    let text = `Category: ${result.subject}\nTopic: ${result.topic}\nLevel: ${result.gradeLevel}\n\nOverview:\n${result.introduction}\n\n`;
     text += result.sections.map(s => `${s.heading}\n${s.content}`).join('\n\n');
-    text += `\n\nKey Terms:\n${result.keyTerms.map(k => `${k.term}: ${k.definition}`).join('\n')}`;
+    text += `\n\nKey Terms/Definitions:\n${result.keyTerms.map(k => `${k.term}: ${k.definition}`).join('\n')}`;
     text += `\n\nSummary:\n${result.summary}`;
     navigator.clipboard.writeText(text);
   };
@@ -431,35 +430,35 @@ export const LessonNoteMaker = ({ onBack }: { onBack: () => void }) => {
             <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
               <FileText size={24} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">AI Lesson Note Maker</h2>
+            <h2 className="text-2xl font-bold text-slate-900">AI Structured Note Maker</h2>
           </div>
           
           <div className="space-y-4">
              <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Subject / Category</label>
               <input 
                 value={subject} 
                 onChange={e => setSubject(e.target.value)}
                 className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900" 
-                placeholder="e.g. History, Biology, Literature" 
+                placeholder="e.g. Sales Training, Project Management, European History" 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Topic</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Specific Topic</label>
               <input 
                 value={topic} 
                 onChange={e => setTopic(e.target.value)}
                 className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900" 
-                placeholder="e.g. World War II, Cell Structure, Shakespeare's Sonnets" 
+                placeholder="e.g. Closing Techniques, Sprint Planning, World War II" 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Grade Level</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Target Expertise / Level</label>
               <input 
                 value={grade} 
                 onChange={e => setGrade(e.target.value)}
                 className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900" 
-                placeholder="e.g. 8th Grade, High School Sophomore" 
+                placeholder="e.g. Entry-level Staff, Executive, 8th Grade" 
               />
             </div>
             <button 
@@ -467,12 +466,12 @@ export const LessonNoteMaker = ({ onBack }: { onBack: () => void }) => {
               disabled={isLoading || !topic || !grade || !subject}
               className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 mt-4"
             >
-              {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 size={20} />} Generate Notes
+              {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 size={20} />} Generate Structured Notes
             </button>
           </div>
         </div>
       ) : (
-        <ResultCard title={`${result.topic} - Class Notes`} onCopy={copyText}>
+        <ResultCard title={`${result.topic} - Structured Notes`} onCopy={copyText}>
           <div className="space-y-6 text-slate-800">
             <div className="flex flex-wrap gap-4 text-sm font-medium text-slate-500 border-b border-slate-100 pb-4">
               <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full">{result.subject}</span>
@@ -480,7 +479,7 @@ export const LessonNoteMaker = ({ onBack }: { onBack: () => void }) => {
             </div>
 
             <div className="bg-slate-50 p-4 rounded-lg border-l-4 border-blue-500">
-              <h4 className="font-bold text-lg mb-2 text-slate-900">Introduction</h4>
+              <h4 className="font-bold text-lg mb-2 text-slate-900">Overview</h4>
               <p className="text-slate-700">{result.introduction}</p>
             </div>
 
@@ -494,7 +493,7 @@ export const LessonNoteMaker = ({ onBack }: { onBack: () => void }) => {
             </div>
 
              <div className="bg-yellow-50 p-5 rounded-xl border border-yellow-100">
-              <h4 className="font-bold text-lg mb-3 text-yellow-800">Key Terms</h4>
+              <h4 className="font-bold text-lg mb-3 text-yellow-800">Key Terms & Concepts</h4>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {result.keyTerms.map((item, i) => (
                    <li key={i} className="text-sm">
@@ -553,7 +552,7 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
       const summary = await summarizeNote(content, image || undefined, mode);
       setResult(summary);
     } catch (e) {
-      alert("Failed to summarize notes");
+      alert("Failed to summarize content");
     } finally {
       setIsLoading(false);
     }
@@ -561,7 +560,7 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
 
   const copyText = () => {
     if (!result) return;
-    const text = `Title: ${result.title}\n\nSummary:\n${result.summary}\n\nKey Points:\n${result.keyPoints.map(k => `- ${k}`).join('\n')}\n\nAction Items:\n${(result.actionableItems || []).map(a => `- ${a}`).join('\n')}`;
+    const text = `Title: ${result.title}\n\nSummary:\n${result.summary}\n\nKey Points:\n${result.keyPoints.map(k => `- ${k}`).join('\n')}\n\nAction/Next Steps:\n${(result.actionableItems || []).map(a => `- ${a}`).join('\n')}`;
     navigator.clipboard.writeText(text);
   };
 
@@ -587,7 +586,7 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
                     onClick={() => setMode('SUMMARIZE')}
                     className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${mode === 'SUMMARIZE' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500'}`}
                 >
-                    Summarize Notes
+                    Summarize Content
                 </button>
                 <button 
                     onClick={() => setMode('EXPLAIN')}
@@ -600,13 +599,13 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
             {/* Input Area */}
             <div className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Paste Text</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Paste Raw Text / Report</label>
                     <textarea 
                         value={content} 
                         onChange={e => setContent(e.target.value)}
                         rows={5}
                         className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 bg-white text-slate-900" 
-                        placeholder="Paste your notes, essay, or article here..." 
+                        placeholder="Paste strategy docs, long emails, or research articles here..." 
                     />
                 </div>
                 
@@ -620,11 +619,11 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
                 </div>
 
                 <div>
-                     <label className="block text-sm font-medium text-slate-700 mb-2">Scan/Upload Image</label>
+                     <label className="block text-sm font-medium text-slate-700 mb-2">Scan/Upload Visual Content</label>
                      
                      {image ? (
                         <div className="relative group inline-block">
-                             <img src={image} alt="Note scan" className="h-40 rounded-lg border border-slate-200 object-cover" />
+                             <img src={image} alt="Document scan" className="h-40 rounded-lg border border-slate-200 object-cover" />
                              <button onClick={removeImage} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600">
                                 <X size={14} />
                              </button>
@@ -635,7 +634,7 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
                             className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition-colors"
                         >
                             <Upload className="text-slate-400 mb-2" size={24} />
-                            <p className="text-sm text-slate-500">Click to upload a photo of your notes</p>
+                            <p className="text-sm text-slate-500">Upload a photo of contracts, whiteboards, or notes</p>
                             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                         </div>
                      )}
@@ -652,7 +651,7 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
           </div>
         </div>
       ) : (
-        <ResultCard title={result.title || "Note Summary"} onCopy={copyText}>
+        <ResultCard title={result.title || "Content Summary"} onCopy={copyText}>
            <div className="space-y-6">
              <div>
                 <h4 className="font-bold text-lg mb-2 text-orange-800">{mode === 'SUMMARIZE' ? 'Summary' : 'Explanation'}</h4>
@@ -660,7 +659,7 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
              </div>
              
              <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                <h4 className="font-bold text-sm text-slate-900 mb-3 uppercase tracking-wider">Key Points</h4>
+                <h4 className="font-bold text-sm text-slate-900 mb-3 uppercase tracking-wider">Key Takeaways</h4>
                 <ul className="space-y-2">
                     {result.keyPoints.map((point, i) => (
                         <li key={i} className="flex gap-2 text-slate-700">
@@ -673,7 +672,7 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
 
              {result.actionableItems && result.actionableItems.length > 0 && (
                 <div className="bg-orange-50 p-5 rounded-xl border border-orange-100">
-                    <h4 className="font-bold text-sm text-orange-900 mb-3 uppercase tracking-wider">Action / Study Items</h4>
+                    <h4 className="font-bold text-sm text-orange-900 mb-3 uppercase tracking-wider">Next Steps / Actions</h4>
                     <ul className="space-y-2">
                          {result.actionableItems.map((item, i) => (
                             <li key={i} className="flex gap-2 text-slate-800">
@@ -687,7 +686,7 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
            </div>
 
            <button onClick={() => setResult(null)} className="text-orange-600 font-medium hover:underline mt-6 block">
-                Process Another Note
+                Process New Content
             </button>
         </ResultCard>
       )}

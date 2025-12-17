@@ -14,16 +14,13 @@ const generateSlideImage = async (ai: GoogleGenAI, prompt: string, quality: Imag
     
     switch (quality) {
       case ImageQuality.LOW:
-        // Simple, cartoonish, outline style
         fullPrompt = `Create a simple, basic, minimalist, cartoonish, outline only, flat colors, low detail flat vector illustration style presentation slide image for: ${prompt}. White background, corporate style.`;
         break;
       case ImageQuality.HIGH:
-        // Photorealistic, cinematic, intricate - we remove 'flat vector' to allow for depth and realism
         fullPrompt = `Create a highly detailed, 4k, vibrant, intricate details, masterpiece, professional shading, depth of field, cinematic lighting, photorealistic presentation slide image for: ${prompt}. White background, corporate style.`;
         break;
       case ImageQuality.MEDIUM:
       default:
-        // Standard balanced vector
         fullPrompt = `Create a standard vector style, clean, balanced detail flat vector illustration style presentation slide image for: ${prompt}. White background, corporate style.`;
         break;
     }
@@ -55,7 +52,6 @@ export const generateSlidesFromText = async (
 ): Promise<SlideResponse> => {
   const ai = initializeGenAI();
 
-  // Define the schema for the output
   const schema = {
     type: Type.OBJECT,
     properties: {
@@ -100,7 +96,7 @@ export const generateSlidesFromText = async (
   } else {
     systemInstruction = `
       You are a world-class presentation designer.
-      Your task is to take the user's input text and create an engaging, high-impact presentation.
+      Your task is to take the user's input text and create an engaging, high-impact presentation for business or academic audiences.
       
       RULES:
       1. Improve clarity, fix grammar, and expand on brief points.
@@ -109,7 +105,6 @@ export const generateSlidesFromText = async (
     `;
   }
 
-  // Add Style Instructions
   let styleInstruction = "";
   switch (style) {
     case PresentationStyle.VISUAL:
@@ -159,8 +154,6 @@ export const generateSlidesFromText = async (
 
   try {
     const parsedResponse = JSON.parse(responseText) as SlideResponse;
-    
-    // Generate images for each slide in parallel
     const slidesWithImages = await Promise.all(
       parsedResponse.slides.map(async (slide) => {
         const generatedImage = await generateSlideImage(ai, slide.imagePrompt, imageQuality);
@@ -170,16 +163,14 @@ export const generateSlidesFromText = async (
         };
       })
     );
-
     return { slides: slidesWithImages };
-
   } catch (error) {
     console.error("Failed to process slides:", error);
     throw new Error("Failed to generate slides or images.");
   }
 };
 
-export const generateLessonPlan = async (topic: string, gradeLevel: string): Promise<LessonPlan> => {
+export const generateLessonPlan = async (topic: string, level: string): Promise<LessonPlan> => {
   const ai = initializeGenAI();
   const schema = {
     type: Type.OBJECT,
@@ -204,7 +195,7 @@ export const generateLessonPlan = async (topic: string, gradeLevel: string): Pro
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: `Create a detailed lesson plan for grade ${gradeLevel} about: ${topic}`,
+    contents: `Create a detailed project plan or lesson roadmap for: ${topic} aimed at ${level}. Focus on clear milestones and success metrics.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: schema
@@ -214,7 +205,7 @@ export const generateLessonPlan = async (topic: string, gradeLevel: string): Pro
   return JSON.parse(response.text!) as LessonPlan;
 };
 
-export const generateQuiz = async (topic: string, difficulty: string, questionCount: number): Promise<Quiz> => {
+export const generateQuiz = async (topic: string, difficulty: string, count: number): Promise<Quiz> => {
   const ai = initializeGenAI();
   const schema = {
     type: Type.OBJECT,
@@ -240,7 +231,7 @@ export const generateQuiz = async (topic: string, difficulty: string, questionCo
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: `Create a ${difficulty} difficulty quiz with ${questionCount} multiple choice questions about: ${topic}. Include specific correct answers and explanations.`,
+    contents: `Create a ${difficulty} difficulty assessment with ${count} items about: ${topic}. Useful for corporate training or student testing.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: schema
@@ -266,7 +257,7 @@ export const generateIcebreaker = async (context: string): Promise<Icebreaker> =
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: `Create a fun, engaging icebreaker activity for: ${context}. Keep it under 15 minutes.`,
+    contents: `Create a fun, professional, or academic engagement activity for: ${context}.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: schema
@@ -276,7 +267,7 @@ export const generateIcebreaker = async (context: string): Promise<Icebreaker> =
   return JSON.parse(response.text!) as Icebreaker;
 };
 
-export const generateLessonNote = async (topic: string, subject: string, gradeLevel: string): Promise<LessonNote> => {
+export const generateLessonNote = async (topic: string, subject: string, level: string): Promise<LessonNote> => {
   const ai = initializeGenAI();
   const schema = {
     type: Type.OBJECT,
@@ -306,8 +297,7 @@ export const generateLessonNote = async (topic: string, subject: string, gradeLe
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: `Create detailed, well-structured student lesson notes for the topic "${topic}" in the subject "${subject}" for grade level "${gradeLevel}". 
-    The notes should be educational, easy to understand, and comprehensive.`,
+    contents: `Create detailed, well-structured professional or educational notes for the topic "${topic}" in "${subject}" at a "${level}" level. Include key takeaways and comprehensive summaries.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: schema
@@ -335,34 +325,22 @@ export const summarizeNote = async (
   };
 
   const parts: any[] = [];
-  
   if (imageBase64) {
-    // Extract base64 data and mime type. Default to image/jpeg if simplified
     const mimeType = imageBase64.substring(imageBase64.indexOf(':') + 1, imageBase64.indexOf(';'));
     const data = imageBase64.split(',')[1];
-    parts.push({
-      inlineData: {
-        mimeType: mimeType,
-        data: data
-      }
-    });
+    parts.push({ inlineData: { mimeType: mimeType, data: data } });
   }
-
-  if (content) {
-    parts.push({ text: content });
-  }
+  if (content) parts.push({ text: content });
 
   const prompt = mode === 'SUMMARIZE' 
-    ? "Analyze the provided content (text and/or image). Provide a concise summary, bullet list of key takeaways, and any actionable study items."
-    : "Analyze the provided content (text and/or image). Provide a detailed explanation of the concepts found, simplify complex terms for a student, and list key points.";
+    ? "Analyze the provided content. Provide a professional summary, bullet list of key takeaways, and any actionable next steps."
+    : "Analyze the provided content. Provide a detailed explanation of the concepts found, simplify jargon, and list key points.";
 
   parts.push({ text: prompt });
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash", // multimodal model
-    contents: {
-      parts: parts
-    },
+    model: "gemini-2.5-flash",
+    contents: { parts: parts },
     config: {
       responseMimeType: "application/json",
       responseSchema: schema

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, HelpCircle, MessageCircle, Presentation, FileText, ScanLine } from 'lucide-react';
+import { BookOpen, HelpCircle, MessageCircle, Presentation, FileText, ScanLine, Briefcase } from 'lucide-react';
 import { ToolId } from '../types';
 
 interface ToolsGridProps {
@@ -11,7 +11,7 @@ export const ToolsGrid: React.FC<ToolsGridProps> = ({ onSelectTool }) => {
     {
       id: ToolId.SLIDE_GENERATOR,
       title: "AI Slide Generator",
-      description: "Transform text into professional presentations with images.",
+      description: "Transform raw text or ideas into professional presentations with AI visuals.",
       icon: <Presentation className="text-white" size={32} />,
       color: "bg-indigo-600",
       hoverColor: "group-hover:text-indigo-600",
@@ -19,17 +19,17 @@ export const ToolsGrid: React.FC<ToolsGridProps> = ({ onSelectTool }) => {
     },
     {
       id: ToolId.LESSON_PLANNER,
-      title: "AI Lesson Plan Generator",
-      description: "Make grade-specific classroom lessons with AI.",
-      icon: <BookOpen className="text-white" size={32} />,
+      title: "AI Project & Lesson Planner",
+      description: "Craft structured roadmaps, objectives, and procedures for projects or classes.",
+      icon: <Briefcase className="text-white" size={32} />,
       color: "bg-purple-600",
       hoverColor: "group-hover:text-purple-600",
       bgSoft: "bg-purple-50"
     },
     {
       id: ToolId.LESSON_NOTE_MAKER,
-      title: "AI Lesson Note Maker",
-      description: "Create detailed, structured study notes for any topic.",
+      title: "AI Structured Note Maker",
+      description: "Create professional meeting minutes, briefs, or comprehensive study notes.",
       icon: <FileText className="text-white" size={32} />,
       color: "bg-blue-600",
       hoverColor: "group-hover:text-blue-600",
@@ -37,8 +37,8 @@ export const ToolsGrid: React.FC<ToolsGridProps> = ({ onSelectTool }) => {
     },
     {
       id: ToolId.QUIZ_MAKER,
-      title: "AI Quiz Maker",
-      description: "Generate ready-to-use quizzes with one click.",
+      title: "AI Assessment Generator",
+      description: "Generate quizzes and assessments for training or classroom testing.",
       icon: <HelpCircle className="text-white" size={32} />,
       color: "bg-pink-600",
       hoverColor: "group-hover:text-pink-600",
@@ -47,7 +47,7 @@ export const ToolsGrid: React.FC<ToolsGridProps> = ({ onSelectTool }) => {
     {
       id: ToolId.NOTE_SUMMARIZER,
       title: "Note Summarizer & Scanner",
-      description: "Scan notes or paste text to summarize and explain.",
+      description: "Scan documents or paste content to get instant summaries and actionable tasks.",
       icon: <ScanLine className="text-white" size={32} />,
       color: "bg-orange-600",
       hoverColor: "group-hover:text-orange-600",
@@ -55,8 +55,8 @@ export const ToolsGrid: React.FC<ToolsGridProps> = ({ onSelectTool }) => {
     },
     {
       id: ToolId.ICEBREAKER,
-      title: "AI Icebreaker Generator",
-      description: "Create fun classroom activities with AI.",
+      title: "AI Engagement & Icebreakers",
+      description: "Fun, engaging activities for team meetings, workshops, or classrooms.",
       icon: <MessageCircle className="text-white" size={32} />,
       color: "bg-emerald-600",
       hoverColor: "group-hover:text-emerald-600",
