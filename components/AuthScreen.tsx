@@ -41,17 +41,29 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-8 text-center">
-          <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-            <Presentation className="text-white" size={32} />
+        {/* Header with Background Image */}
+        <div className="relative p-10 text-center overflow-hidden group">
+          {/* Background Image: Meeting/Presentation Context */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center z-0 transition-transform duration-700 group-hover:scale-105"
+            style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=1000")' }}
+          />
+          
+          {/* Gradient Overlay for Brand Colors & Readability */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/90 to-violet-800/90 z-0 mix-blend-multiply" />
+          
+          {/* Content */}
+          <div className="relative z-10">
+            <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-md border border-white/20 shadow-lg">
+              <Presentation className="text-white drop-shadow-md" size={32} />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-md tracking-tight">
+              Welcome to SlideGen AI
+            </h1>
+            <p className="text-indigo-50 text-sm font-medium drop-shadow-sm max-w-[280px] mx-auto">
+              Turn your ideas into professional presentations in seconds.
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">
-            Welcome to SlideGen AI
-          </h1>
-          <p className="text-indigo-100 text-sm">
-            Turn your ideas into professional presentations in seconds.
-          </p>
         </div>
 
         {/* Form */}
