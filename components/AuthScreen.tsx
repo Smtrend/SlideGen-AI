@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
-import { Presentation, Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Presentation, Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle, ArrowLeft, GraduationCap, Briefcase } from 'lucide-react';
 import { authService } from '../services/authService';
-import { User } from '../types';
+import { User, UserType } from '../types';
 
 interface AuthScreenProps {
   onLogin: (user: User) => void;
@@ -13,10 +14,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [userType, setUserType] = useState<UserType>(UserType.PROFESSIONAL);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +28,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onBack }) => {
       let user: User;
       if (isRegistering) {
         if (!name.trim()) throw new Error("Name is required.");
-        user = await authService.register(email, password, name);
+        user = await authService.register(email, password, name, userType);
       } else {
         user = await authService.login(email, password);
       }
@@ -51,18 +52,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onBack }) => {
           <ArrowLeft size={20} />
         </button>
 
-        {/* Header with Background Image */}
         <div className="relative p-10 text-center overflow-hidden group">
-          {/* Background Image: Meeting/Presentation Context */}
           <div 
             className="absolute inset-0 bg-cover bg-center z-0 transition-transform duration-700 group-hover:scale-105"
             style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=1000")' }}
           />
-          
-          {/* Gradient Overlay for Brand Colors & Readability */}
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/90 to-violet-800/90 z-0 mix-blend-multiply" />
           
-          {/* Content */}
           <div className="relative z-10">
             <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-md border border-white/20 shadow-lg">
               <Presentation className="text-white drop-shadow-md" size={32} />
@@ -71,12 +67,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onBack }) => {
               Welcome to SlideGen AI
             </h1>
             <p className="text-indigo-50 text-sm font-medium drop-shadow-sm max-w-[280px] mx-auto">
-              Turn your ideas into professional presentations in seconds.
+              Professional tools for students and working-class experts.
             </p>
           </div>
         </div>
 
-        {/* Form */}
         <div className="p-8">
           <h2 className="text-xl font-bold text-slate-800 mb-6">
             {isRegistering ? 'Create Account' : 'Sign In'}
@@ -91,20 +86,44 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onBack }) => {
             )}
 
             {isRegistering && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                <div className="relative">
-                  <UserIcon className="absolute left-3 top-3 text-slate-400" size={18} />
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white text-slate-900"
-                    placeholder="John Doe"
-                    required={isRegistering}
-                  />
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-3 text-slate-400" size={18} />
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white text-slate-900"
+                      placeholder="John Doe"
+                      required={isRegistering}
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">I am a...</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setUserType(UserType.STUDENT)}
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${userType === UserType.STUDENT ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-100 bg-slate-50 text-slate-500'}`}
+                    >
+                      <GraduationCap size={20} className="mb-1" />
+                      <span className="text-xs font-bold">Student</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUserType(UserType.PROFESSIONAL)}
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${userType === UserType.PROFESSIONAL ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-100 bg-slate-50 text-slate-500'}`}
+                    >
+                      <Briefcase size={20} className="mb-1" />
+                      <span className="text-xs font-bold">Professional</span>
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
 
             <div>
@@ -146,7 +165,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onBack }) => {
                 <Loader2 className="animate-spin" size={20} />
               ) : (
                 <>
-                  {isRegistering ? 'Sign Up' : 'Sign In'}
+                  {isRegistering ? 'Start 30-Day Free Trial' : 'Sign In'}
                   <ArrowRight size={18} />
                 </>
               )}

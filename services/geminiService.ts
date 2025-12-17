@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { GenerationMode, SlideResponse, PresentationStyle, ImageQuality, LessonPlan, Quiz, Icebreaker, LessonNote, NoteSummary } from "../types";
 
@@ -42,6 +43,38 @@ const generateSlideImage = async (ai: GoogleGenAI, prompt: string, quality: Imag
     console.warn("Image generation failed for slide:", error);
     return undefined;
   }
+};
+
+export const verifyStudentId = async (imageBase64: string, schoolName: string): Promise<{ verified: boolean; confidence: number; reason: string }> => {
+  const ai = initializeGenAI();
+  const mimeType = imageBase64.substring(imageBase64.indexOf(':') + 1, imageBase64.indexOf(';'));
+  const data = imageBase64.split(',')[1];
+
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      verified: { type: Type.BOOLEAN, description: "Whether the ID is likely a valid student ID for the given school" },
+      confidence: { type: Type.NUMBER, description: "Confidence score from 0 to 1" },
+      reason: { type: Type.STRING, description: "Reason for the verification decision" }
+    },
+    required: ["verified", "confidence", "reason"]
+  };
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: {
+      parts: [
+        { inlineData: { mimeType, data } },
+        { text: `Analyze this image. Is it a valid Student ID card for "${schoolName}"? Look for the school name, 'Student', 'ID', dates, and a photo. Return verification status.` }
+      ]
+    },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: schema
+    }
+  });
+
+  return JSON.parse(response.text!) as { verified: boolean; confidence: number; reason: string };
 };
 
 export const generateSlidesFromText = async (

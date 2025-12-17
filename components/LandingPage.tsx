@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Presentation, Wand2, Zap, Layout, ArrowRight, CheckCircle2, Share2, Sparkles, FileText, ScanLine, HelpCircle, BookOpen, Briefcase, Users } from 'lucide-react';
+import { Presentation, Wand2, Zap, Layout, ArrowRight, CheckCircle2, Share2, Sparkles, FileText, ScanLine, HelpCircle, BookOpen, Briefcase, Users, Star } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -12,6 +12,54 @@ const HERO_IMAGES = [
   "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000",
   "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2000"
 ];
+
+const TESTIMONIALS_ROW_1 = [
+  { name: "Sarah Jenkins", role: "Product Manager @ TechFlow", quote: "Reduced my presentation prep time from 4 hours to 10 minutes. Incredible AI accuracy!", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150" },
+  { name: "Dr. Marcus Lee", role: "University Professor", quote: "A game changer for my lectures. The structured notes feature is what my students always needed.", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150" },
+  { name: "Alex Rivera", role: "Sales Lead @ GrowthX", quote: "Professional decks that actually close deals. The image generation is spot on.", img: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=150" },
+  { name: "Anita Rao", role: "Strategy Consultant", quote: "I love how it organizes my messy thoughts into clear, boardroom-ready slides.", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" },
+];
+
+const TESTIMONIALS_ROW_2 = [
+  { name: "Elena Rossi", role: "Freelance UI Designer", quote: "I use the Note Maker for project briefs. It's like having a personal assistant who never sleeps.", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150" },
+  { name: "Thomas Berg", role: "MBA Student", quote: "The Scan & Summarize tool is a life saver for long case studies. Highly recommend!", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150" },
+  { name: "Lisa Manning", role: "HR Director", quote: "Our onboarding training is now 100% automated with the Quiz Maker. Efficiency at its best.", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150" },
+  { name: "Michael Holland", role: "Project Manager @ BuildCo", quote: "The Roadmap tool helps me align my team faster than any other project software.", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" },
+];
+
+const TestimonialCard = ({ testimonial, variant }: { testimonial: typeof TESTIMONIALS_ROW_1[0], variant: 'upper' | 'lower' }) => {
+  const isUpper = variant === 'upper';
+  
+  return (
+    <div className={`flex-shrink-0 w-[380px] mx-4 p-6 rounded-2xl border transition-all shadow-sm hover:shadow-lg hover:-translate-y-1 duration-300 ${
+      isUpper 
+        ? 'bg-indigo-50 border-indigo-100 text-indigo-900' 
+        : 'bg-emerald-50 border-emerald-100 text-emerald-900'
+    }`}>
+      <div className="flex items-center gap-1 mb-4">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} size={14} className={`fill-current ${isUpper ? 'text-indigo-400' : 'text-emerald-500'}`} />
+        ))}
+      </div>
+      <p className={`mb-6 font-medium italic leading-relaxed ${isUpper ? 'text-indigo-800' : 'text-emerald-800'}`}>
+        "{testimonial.quote}"
+      </p>
+      <div className="flex items-center gap-3">
+        <img 
+          src={testimonial.img} 
+          alt={testimonial.name} 
+          className={`w-10 h-10 rounded-full object-cover border-2 ${isUpper ? 'border-indigo-200' : 'border-emerald-200 shadow-sm'}`} 
+        />
+        <div>
+          <h4 className="font-bold text-sm tracking-tight">{testimonial.name}</h4>
+          <p className={`text-xs opacity-70 font-semibold ${isUpper ? 'text-indigo-600' : 'text-emerald-600'}`}>
+            {testimonial.role}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -26,6 +74,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
       
+      <style>{`
+        @keyframes marquee-left {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes marquee-right {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
+        }
+        .animate-marquee-left {
+          display: flex;
+          width: max-content;
+          animation: marquee-left 45s linear infinite;
+        }
+        .animate-marquee-right {
+          display: flex;
+          width: max-content;
+          animation: marquee-right 45s linear infinite;
+        }
+        .marquee-container:hover .animate-marquee-left,
+        .marquee-container:hover .animate-marquee-right {
+          animation-play-state: paused;
+        }
+      `}</style>
+
       {/* Navbar */}
       <nav className="fixed w-full bg-white/90 backdrop-blur-md z-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -177,6 +250,32 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 Export presentations to PowerPoint (.pptx) or copy notes directly into Slack, Email, or Word.
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Testimonial Marquee Section */}
+      <div className="py-24 bg-white overflow-hidden marquee-container border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 text-center">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">Trusted Across the Board</h2>
+          <p className="text-slate-500 max-w-xl mx-auto">From startups to universities, see why SlideGen AI is a daily essential.</p>
+        </div>
+
+        {/* Row 1 - Moving Right (Indigo Theme) */}
+        <div className="flex mb-10 overflow-hidden">
+          <div className="animate-marquee-right">
+            {[...TESTIMONIALS_ROW_1, ...TESTIMONIALS_ROW_1].map((t, i) => (
+              <TestimonialCard key={i} testimonial={t} variant="upper" />
+            ))}
+          </div>
+        </div>
+
+        {/* Row 2 - Moving Left (Emerald Theme) */}
+        <div className="flex overflow-hidden">
+          <div className="animate-marquee-left">
+            {[...TESTIMONIALS_ROW_2, ...TESTIMONIALS_ROW_2].map((t, i) => (
+              <TestimonialCard key={i} testimonial={t} variant="lower" />
+            ))}
           </div>
         </div>
       </div>

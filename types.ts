@@ -1,17 +1,35 @@
+
 export interface Slide {
   id: string;
   title: string;
   bullets: string[];
   speakerNotes?: string;
-  image?: string; // Base64 string for the image
-  backgroundImage?: string; // Base64 string for the background image
+  image?: string;
+  backgroundImage?: string;
   transition?: SlideTransition;
+}
+
+export enum UserType {
+  STUDENT = 'STUDENT',
+  PROFESSIONAL = 'PROFESSIONAL'
+}
+
+export enum SubscriptionStatus {
+  TRIAL = 'TRIAL',
+  ACTIVE = 'ACTIVE',
+  EXPIRED = 'EXPIRED'
 }
 
 export interface User {
   id: string;
   email: string;
   name: string;
+  userType: UserType;
+  subscriptionStatus: SubscriptionStatus;
+  trialStartDate: number;
+  paymentMethodLinked: boolean;
+  studentVerified: boolean;
+  schoolName?: string;
 }
 
 export interface Presentation {
@@ -31,18 +49,17 @@ export enum SlideTransition {
   WIPE = 'wipe',
   COVER = 'cover',
   UNCOVER = 'uncover'
-
 }
 
 export enum GenerationMode {
-  ORGANIZE = 'ORGANIZE', // Strictly organize input text
-  ENHANCE = 'ENHANCE',   // Improve, expand, and format text
+  ORGANIZE = 'ORGANIZE',
+  ENHANCE = 'ENHANCE',
 }
 
 export enum PresentationStyle {
-  STANDARD = 'STANDARD',   // Balanced text and bullets (Content Slide)
-  VISUAL = 'VISUAL',       // Minimal text, includes image descriptions (Image Slide)
-  MINIMALIST = 'MINIMALIST' // Very concise, punchy text (Title Slide style)
+  STANDARD = 'STANDARD',
+  VISUAL = 'VISUAL',
+  MINIMALIST = 'MINIMALIST'
 }
 
 export enum ImageQuality {
@@ -75,8 +92,6 @@ export interface SlideResponse {
     image?: string;
   }[];
 }
-
-// --- NEW TOOL TYPES ---
 
 export enum ToolId {
   SLIDE_GENERATOR = 'SLIDE_GENERATOR',
