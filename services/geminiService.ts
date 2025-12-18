@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { GenerationMode, SlideResponse, PresentationStyle, ImageQuality, LessonPlan, Quiz, Icebreaker, LessonNote, NoteSummary } from "../types";
 
@@ -26,6 +25,7 @@ const generateSlideImage = async (ai: GoogleGenAI, prompt: string, quality: Imag
         break;
     }
 
+    // Use gemini-2.5-flash-image for standard image generation tasks as per guidelines
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -60,8 +60,9 @@ export const verifyStudentId = async (imageBase64: string, schoolName: string): 
     required: ["verified", "confidence", "reason"]
   };
 
+  // Use gemini-3-flash-preview for basic text and vision tasks
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash-preview",
     contents: {
       parts: [
         { inlineData: { mimeType, data } },
@@ -74,7 +75,8 @@ export const verifyStudentId = async (imageBase64: string, schoolName: string): 
     }
   });
 
-  return JSON.parse(response.text!) as { verified: boolean; confidence: number; reason: string };
+  const responseText = response.text || "{}";
+  return JSON.parse(responseText) as { verified: boolean; confidence: number; reason: string };
 };
 
 export const generateSlidesFromText = async (
@@ -170,8 +172,9 @@ export const generateSlidesFromText = async (
   systemInstruction += `\nIMPORTANT: For EVERY slide, generate a 'imagePrompt' field that describes a relevant visual/illustration for that slide.`;
   systemInstruction += `\nIMPORTANT: For EVERY slide, generate 'speakerNotes' that are verbose, conversational, and explanatory. Do not just repeat the bullets. Explain them.`;
 
+  // Use gemini-3-pro-preview for complex reasoning and structuring tasks
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-pro-preview",
     contents: text,
     config: {
       systemInstruction: systemInstruction,
@@ -226,8 +229,9 @@ export const generateLessonPlan = async (topic: string, level: string): Promise<
     required: ["title", "objectives", "procedure", "assessment"]
   };
 
+  // Use gemini-3-pro-preview for complex reasoning and pedagogical tasks
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-pro-preview",
     contents: `Create a detailed project plan or lesson roadmap for: ${topic} aimed at ${level}. Focus on clear milestones and success metrics.`,
     config: {
       responseMimeType: "application/json",
@@ -235,7 +239,8 @@ export const generateLessonPlan = async (topic: string, level: string): Promise<
     }
   });
 
-  return JSON.parse(response.text!) as LessonPlan;
+  const responseText = response.text || "{}";
+  return JSON.parse(responseText) as LessonPlan;
 };
 
 export const generateQuiz = async (topic: string, difficulty: string, count: number): Promise<Quiz> => {
@@ -262,8 +267,9 @@ export const generateQuiz = async (topic: string, difficulty: string, count: num
     required: ["title", "questions"]
   };
 
+  // Use gemini-3-pro-preview for generating complex educational assessments
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-pro-preview",
     contents: `Create a ${difficulty} difficulty assessment with ${count} items about: ${topic}. Useful for corporate training or student testing.`,
     config: {
       responseMimeType: "application/json",
@@ -271,7 +277,8 @@ export const generateQuiz = async (topic: string, difficulty: string, count: num
     }
   });
 
-  return JSON.parse(response.text!) as Quiz;
+  const responseText = response.text || "{}";
+  return JSON.parse(responseText) as Quiz;
 };
 
 export const generateIcebreaker = async (context: string): Promise<Icebreaker> => {
@@ -288,8 +295,9 @@ export const generateIcebreaker = async (context: string): Promise<Icebreaker> =
     required: ["title", "instructions", "whyItWorks"]
   };
 
+  // Use gemini-3-flash-preview for general text creative tasks
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash-preview",
     contents: `Create a fun, professional, or academic engagement activity for: ${context}.`,
     config: {
       responseMimeType: "application/json",
@@ -297,7 +305,8 @@ export const generateIcebreaker = async (context: string): Promise<Icebreaker> =
     }
   });
 
-  return JSON.parse(response.text!) as Icebreaker;
+  const responseText = response.text || "{}";
+  return JSON.parse(responseText) as Icebreaker;
 };
 
 export const generateLessonNote = async (topic: string, subject: string, level: string): Promise<LessonNote> => {
@@ -328,8 +337,9 @@ export const generateLessonNote = async (topic: string, subject: string, level: 
     required: ["topic", "introduction", "sections", "keyTerms", "summary"]
   };
 
+  // Use gemini-3-pro-preview for structuring complex educational content
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-pro-preview",
     contents: `Create detailed, well-structured professional or educational notes for the topic "${topic}" in "${subject}" at a "${level}" level. Include key takeaways and comprehensive summaries.`,
     config: {
       responseMimeType: "application/json",
@@ -337,7 +347,8 @@ export const generateLessonNote = async (topic: string, subject: string, level: 
     }
   });
 
-  return JSON.parse(response.text!) as LessonNote;
+  const responseText = response.text || "{}";
+  return JSON.parse(responseText) as LessonNote;
 };
 
 export const summarizeNote = async (
@@ -371,8 +382,9 @@ export const summarizeNote = async (
 
   parts.push({ text: prompt });
 
+  // Use gemini-3-flash-preview for summarization and simplified analysis
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash-preview",
     contents: { parts: parts },
     config: {
       responseMimeType: "application/json",
@@ -380,5 +392,6 @@ export const summarizeNote = async (
     }
   });
 
-  return JSON.parse(response.text!) as NoteSummary;
+  const responseText = response.text || "{}";
+  return JSON.parse(responseText) as NoteSummary;
 };

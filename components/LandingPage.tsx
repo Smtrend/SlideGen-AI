@@ -27,7 +27,8 @@ const TESTIMONIALS_ROW_2 = [
   { name: "Michael Holland", role: "Project Manager @ BuildCo", quote: "The Roadmap tool helps me align my team faster than any other project software.", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" },
 ];
 
-const TestimonialCard = ({ testimonial, variant }: { testimonial: typeof TESTIMONIALS_ROW_1[0], variant: 'upper' | 'lower' }) => {
+// Fix: Correctly define the component as a React.FC to properly handle standard props like 'key' in mapped components
+const TestimonialCard: React.FC<{ testimonial: typeof TESTIMONIALS_ROW_1[0], variant: 'upper' | 'lower' }> = ({ testimonial, variant }) => {
   const isUpper = variant === 'upper';
   
   return (

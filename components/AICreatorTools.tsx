@@ -1,7 +1,10 @@
+
 import React, { useState, useRef } from 'react';
-import { BookOpen, HelpCircle, MessageCircle, Wand2, Copy, Check, Loader2, ArrowLeft, FileText, ScanLine, Upload, Image as ImageIcon, X, Briefcase } from 'lucide-react';
+import { BookOpen, HelpCircle, MessageCircle, Wand2, Copy, Check, Loader2, ArrowLeft, FileText, ScanLine, Upload, Image as ImageIcon, X, Briefcase, Download } from 'lucide-react';
 import { generateLessonPlan, generateQuiz, generateIcebreaker, generateLessonNote, summarizeNote } from '../services/geminiService';
 import { LessonPlan, Quiz, Icebreaker, LessonNote, NoteSummary } from '../types';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // --- Shared Components ---
 
@@ -13,6 +16,8 @@ interface ResultCardProps {
 
 const ResultCard = ({ title, children, onCopy }: ResultCardProps) => {
   const [copied, setCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const handleCopy = () => {
     if (onCopy) {
@@ -22,21 +27,95 @@ const ResultCard = ({ title, children, onCopy }: ResultCardProps) => {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    if (!contentRef.current) return;
+    setIsDownloading(true);
+    
+    try {
+      const element = contentRef.current;
+      
+      // We capture the canvas with high fidelity. 
+      // Important: scale 2 improves text crispness.
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        // Capture the full height of the element regardless of scroll position
+        height: element.scrollHeight,
+        windowHeight: element.scrollHeight,
+        scrollY: -window.scrollY, 
+        onclone: (clonedDoc) => {
+          // Prepare the element for capture by ensuring it's not clipped in the clone
+          const clonedElement = clonedDoc.querySelector('[data-pdf-content="true"]') as HTMLElement;
+          if (clonedElement) {
+            clonedElement.style.height = 'auto';
+            clonedElement.style.overflow = 'visible';
+            clonedElement.style.position = 'relative';
+          }
+        }
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      // Calculate scaled image height to fit A4 width
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add the first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight; // Offsets the image for the next page crop
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save(`${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
+    } catch (error) {
+      console.error('PDF Generation failed:', error);
+      alert('An error occurred while generating your PDF. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-fade-in-up">
-      <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+      <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <h3 className="font-bold text-slate-800 text-lg">{title}</h3>
-        {onCopy && (
+        <div className="flex items-center gap-4">
+          {onCopy && (
+            <button 
+              onClick={handleCopy}
+              className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors"
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+              {copied ? 'Copied' : 'Copy Text'}
+            </button>
+          )}
           <button 
-            onClick={handleCopy}
-            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors"
+            onClick={handleDownloadPDF}
+            disabled={isDownloading}
+            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors disabled:opacity-50"
           >
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-            {copied ? 'Copied' : 'Copy'}
+            {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            {isDownloading ? 'Processing...' : 'Download PDF'}
           </button>
-        )}
+        </div>
       </div>
-      <div className="p-6">
+      {/* Result Container - marked with data attribute for PDF generator */}
+      <div className="p-10 bg-white" ref={contentRef} data-pdf-content="true">
         {children}
       </div>
     </div>
@@ -146,7 +225,7 @@ export const LessonPlanner = ({ onBack }: { onBack: () => void }) => {
                <p className="mt-2"><strong>Success Metric:</strong> {result.assessment}</p>
             </div>
             
-            <button onClick={() => setResult(null)} className="text-purple-600 font-medium hover:underline mt-4 block">
+            <button onClick={() => setResult(null)} className="text-purple-600 font-medium hover:underline mt-4 block print:hidden">
                 Plan Another
             </button>
           </div>
@@ -268,7 +347,7 @@ export const QuizMaker = ({ onBack }: { onBack: () => void }) => {
                         </div>
                         <button 
                             onClick={() => toggleAnswer(i)}
-                            className="text-xs font-semibold text-pink-600 hover:text-pink-800 uppercase tracking-wide"
+                            className="text-xs font-semibold text-pink-600 hover:text-pink-800 uppercase tracking-wide print:hidden"
                         >
                             {showAnswers[i] ? 'Hide Answer' : 'Show Answer'}
                         </button>
@@ -281,7 +360,7 @@ export const QuizMaker = ({ onBack }: { onBack: () => void }) => {
                     </div>
                 ))}
             </div>
-             <button onClick={() => setResult(null)} className="text-pink-600 font-medium hover:underline mt-6 block">
+             <button onClick={() => setResult(null)} className="text-pink-600 font-medium hover:underline mt-6 block print:hidden">
                 Generate Another
             </button>
         </ResultCard>
@@ -378,7 +457,7 @@ export const IcebreakerGenerator = ({ onBack }: { onBack: () => void }) => {
              )}
            </div>
 
-           <button onClick={() => setResult(null)} className="text-emerald-600 font-medium hover:underline mt-6 block">
+           <button onClick={() => setResult(null)} className="text-emerald-600 font-medium hover:underline mt-6 block print:hidden">
                 Generate Another
             </button>
         </ResultCard>
@@ -508,7 +587,7 @@ export const LessonNoteMaker = ({ onBack }: { onBack: () => void }) => {
               <p className="text-slate-700 italic">{result.summary}</p>
             </div>
 
-            <button onClick={() => setResult(null)} className="text-blue-600 font-medium hover:underline mt-4 block">
+            <button onClick={() => setResult(null)} className="text-blue-600 font-medium hover:underline mt-4 block print:hidden">
                 Generate Another
             </button>
           </div>
@@ -685,7 +764,7 @@ export const NoteSummarizer = ({ onBack }: { onBack: () => void }) => {
              )}
            </div>
 
-           <button onClick={() => setResult(null)} className="text-orange-600 font-medium hover:underline mt-6 block">
+           <button onClick={() => setResult(null)} className="text-orange-600 font-medium hover:underline mt-6 block print:hidden">
                 Process New Content
             </button>
         </ResultCard>
