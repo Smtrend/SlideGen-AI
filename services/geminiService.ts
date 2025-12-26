@@ -1,5 +1,6 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
-import { GenerationMode, SlideResponse, PresentationStyle, ImageQuality, LessonPlan, Quiz, Icebreaker, LessonNote, NoteSummary } from "../types";
+import { GenerationMode, SlideResponse, PresentationStyle, ImageQuality, LessonPlan, Quiz, Icebreaker, LessonNote, NoteSummary, SourceMode } from "../types";
 
 const initializeGenAI = () => {
   if (!process.env.API_KEY) {
@@ -25,7 +26,6 @@ const generateSlideImage = async (ai: GoogleGenAI, prompt: string, quality: Imag
         break;
     }
 
-    // Use gemini-2.5-flash-image for standard image generation tasks as per guidelines
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -60,7 +60,6 @@ export const verifyStudentId = async (imageBase64: string, schoolName: string): 
     required: ["verified", "confidence", "reason"]
   };
 
-  // Use gemini-3-flash-preview for basic text and vision tasks
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: {
@@ -83,7 +82,8 @@ export const generateSlidesFromText = async (
   text: string,
   mode: GenerationMode,
   style: PresentationStyle,
-  imageQuality: ImageQuality
+  imageQuality: ImageQuality,
+  sourceMode: SourceMode = SourceMode.TEXT
 ): Promise<SlideResponse> => {
   const ai = initializeGenAI();
 
@@ -116,7 +116,18 @@ export const generateSlidesFromText = async (
 
   let systemInstruction = "";
 
-  if (mode === GenerationMode.ORGANIZE) {
+  if (sourceMode === SourceMode.TOPIC) {
+    systemInstruction = `
+      You are a world-class presentation content creator. 
+      The user has provided a TOPIC only. Your job is to research and write a full presentation about this subject from scratch.
+      
+      RULES:
+      1. Create 6-10 logical slides covering the background, key points, challenges, and future of the topic.
+      2. Write authoritative and engaging content.
+      3. Ensure each slide has unique and valuable information.
+      4. For each slide, write detailed speaker notes as a script for the presenter.
+    `;
+  } else if (mode === GenerationMode.ORGANIZE) {
     systemInstruction = `
       You are a strict presentation organizer. 
       Your task is to take the user's input text and split it into logical slides.
@@ -172,10 +183,13 @@ export const generateSlidesFromText = async (
   systemInstruction += `\nIMPORTANT: For EVERY slide, generate a 'imagePrompt' field that describes a relevant visual/illustration for that slide.`;
   systemInstruction += `\nIMPORTANT: For EVERY slide, generate 'speakerNotes' that are verbose, conversational, and explanatory. Do not just repeat the bullets. Explain them.`;
 
-  // Use gemini-3-pro-preview for complex reasoning and structuring tasks
+  const inputPrompt = sourceMode === SourceMode.TOPIC 
+    ? `Write a comprehensive presentation about the topic: ${text}`
+    : text;
+
   const response = await ai.models.generateContent({
     model: "gemini-3-pro-preview",
-    contents: text,
+    contents: inputPrompt,
     config: {
       systemInstruction: systemInstruction,
       responseMimeType: "application/json",
@@ -229,7 +243,6 @@ export const generateLessonPlan = async (topic: string, level: string): Promise<
     required: ["title", "objectives", "procedure", "assessment"]
   };
 
-  // Use gemini-3-pro-preview for complex reasoning and pedagogical tasks
   const response = await ai.models.generateContent({
     model: "gemini-3-pro-preview",
     contents: `Create a detailed project plan or lesson roadmap for: ${topic} aimed at ${level}. Focus on clear milestones and success metrics.`,
@@ -267,7 +280,6 @@ export const generateQuiz = async (topic: string, difficulty: string, count: num
     required: ["title", "questions"]
   };
 
-  // Use gemini-3-pro-preview for generating complex educational assessments
   const response = await ai.models.generateContent({
     model: "gemini-3-pro-preview",
     contents: `Create a ${difficulty} difficulty assessment with ${count} items about: ${topic}. Useful for corporate training or student testing.`,
@@ -295,7 +307,6 @@ export const generateIcebreaker = async (context: string): Promise<Icebreaker> =
     required: ["title", "instructions", "whyItWorks"]
   };
 
-  // Use gemini-3-flash-preview for general text creative tasks
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Create a fun, professional, or academic engagement activity for: ${context}.`,
@@ -337,7 +348,6 @@ export const generateLessonNote = async (topic: string, subject: string, level: 
     required: ["topic", "introduction", "sections", "keyTerms", "summary"]
   };
 
-  // Use gemini-3-pro-preview for structuring complex educational content
   const response = await ai.models.generateContent({
     model: "gemini-3-pro-preview",
     contents: `Create detailed, well-structured professional or educational notes for the topic "${topic}" in "${subject}" at a "${level}" level. Include key takeaways and comprehensive summaries.`,
@@ -382,7 +392,6 @@ export const summarizeNote = async (
 
   parts.push({ text: prompt });
 
-  // Use gemini-3-flash-preview for summarization and simplified analysis
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: { parts: parts },

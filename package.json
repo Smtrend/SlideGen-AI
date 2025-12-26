@@ -17,7 +17,8 @@
     "uuid": "^13.0.0",
     "idb": "8.0.0",
     "jspdf": "^2.5.1",
-    "html2canvas": "^1.4.1"
+    "html2canvas": "^1.4.1",
+    "@supabase/supabase-js": "^2.48.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

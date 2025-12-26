@@ -1,76 +1,99 @@
 
 import { User, UserType, SubscriptionStatus } from '../types';
-import { v4 as uuidv4 } from 'uuid';
-
-const USERS_KEY = 'slidegen_users';
-const CURRENT_USER_KEY = 'slidegen_current_user';
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import { supabase } from './supabaseClient';
 
 export const authService = {
   async register(email: string, password: string, name: string, userType: UserType): Promise<User> {
-    await delay(800);
-
-    const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-    
-    if (users.find((u: any) => u.email === email)) {
-      throw new Error('User already exists with this email.');
-    }
-
-    const newUser: any = {
-      id: uuidv4(),
+    // 1. Sign up the user in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      name,
       password,
-      userType,
+      options: {
+        data: {
+          full_name: name,
+          user_type: userType
+        }
+      }
+    });
+
+    if (authError) throw authError;
+    if (!authData.user) throw new Error('Registration failed. Please try again.');
+
+    const profile: User = {
+      id: authData.user.id,
+      email: email,
+      name: name,
+      userType: userType,
       subscriptionStatus: SubscriptionStatus.TRIAL,
       trialStartDate: Date.now(),
       paymentMethodLinked: false,
       studentVerified: false
     };
 
-    users.push(newUser);
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    
-    const { password: _, ...userToReturn } = newUser;
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userToReturn));
-    
-    return userToReturn;
+    // 2. Use UPSERT instead of INSERT to handle cases where the user 
+    // attempts to register again after a failed/unconfirmed first attempt.
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert(profile, { onConflict: 'id' });
+
+    if (profileError) {
+      throw profileError;
+    }
+
+    return profile;
   },
 
   async login(email: string, password: string): Promise<User> {
-    await delay(800);
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-    const user = users.find((u: any) => u.email === email && u.password === password);
+    if (authError) throw authError;
+    if (!authData.user) throw new Error('Login failed');
 
-    if (!user) {
-      throw new Error('Invalid email or password.');
-    }
+    const profile = await this.getProfile(authData.user.id);
+    if (!profile) throw new Error('Profile not found');
 
-    const { password: _, ...userToReturn } = user;
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userToReturn));
+    return profile;
+  },
 
-    return userToReturn;
+  async getProfile(userId: string): Promise<User | null> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error || !data) return null;
+    
+    return {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      userType: data.userType as UserType,
+      subscriptionStatus: data.subscriptionStatus as SubscriptionStatus,
+      trialStartDate: typeof data.trialStartDate === 'string' ? parseInt(data.trialStartDate) : data.trialStartDate,
+      paymentMethodLinked: data.paymentMethodLinked,
+      studentVerified: data.studentVerified,
+      schoolName: data.schoolName
+    };
   },
 
   async updateUser(updatedUser: User): Promise<void> {
-    const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-    const index = users.findIndex((u: any) => u.id === updatedUser.id);
-    if (index !== -1) {
-      users[index] = { ...users[index], ...updatedUser };
-      localStorage.setItem(USERS_KEY, JSON.stringify(users));
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
-    }
+    const { error } = await supabase
+      .from('profiles')
+      .update(updatedUser)
+      .eq('id', updatedUser.id);
+
+    if (error) throw error;
   },
 
   async logout(): Promise<void> {
-    await delay(300);
-    localStorage.removeItem(CURRENT_USER_KEY);
+    await supabase.auth.signOut();
   },
 
   getCurrentUser(): User | null {
-    const stored = localStorage.getItem(CURRENT_USER_KEY);
-    return stored ? JSON.parse(stored) : null;
+    return null; // Managed by session listener in App.tsx
   }
 };

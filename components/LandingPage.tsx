@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Presentation, Wand2, Zap, Layout, ArrowRight, CheckCircle2, Share2, Sparkles, FileText, ScanLine, HelpCircle, BookOpen, Briefcase, Users, Star } from 'lucide-react';
 
@@ -27,7 +28,6 @@ const TESTIMONIALS_ROW_2 = [
   { name: "Michael Holland", role: "Project Manager @ BuildCo", quote: "The Roadmap tool helps me align my team faster than any other project software.", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" },
 ];
 
-// Fix: Correctly define the component as a React.FC to properly handle standard props like 'key' in mapped components
 const TestimonialCard: React.FC<{ testimonial: typeof TESTIMONIALS_ROW_1[0], variant: 'upper' | 'lower' }> = ({ testimonial, variant }) => {
   const isUpper = variant === 'upper';
   
@@ -131,7 +131,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       {/* Hero Section */}
       <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-40 overflow-hidden bg-slate-900">
         
-        {/* Animated Background Images */}
         {HERO_IMAGES.map((img, index) => (
             <div
                 key={img}
@@ -142,10 +141,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
             />
         ))}
 
-        {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-50 z-0" />
         
-        {/* Animated Orbs */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none z-0">
            <div className="absolute top-20 right-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl mix-blend-screen animate-pulse" />
            <div className="absolute top-40 left-0 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl mix-blend-screen animate-pulse delay-700" />
@@ -262,20 +259,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
           <p className="text-slate-500 max-w-xl mx-auto">From startups to universities, see why SlideGen AI is a daily essential.</p>
         </div>
 
-        {/* Row 1 - Moving Right (Indigo Theme) */}
         <div className="flex mb-10 overflow-hidden">
           <div className="animate-marquee-right">
             {[...TESTIMONIALS_ROW_1, ...TESTIMONIALS_ROW_1].map((t, i) => (
-              <TestimonialCard key={i} testimonial={t} variant="upper" />
+              <TestimonialCard key={`row1-${i}`} testimonial={t} variant="upper" />
             ))}
           </div>
         </div>
 
-        {/* Row 2 - Moving Left (Emerald Theme) */}
         <div className="flex overflow-hidden">
           <div className="animate-marquee-left">
             {[...TESTIMONIALS_ROW_2, ...TESTIMONIALS_ROW_2].map((t, i) => (
-              <TestimonialCard key={i} testimonial={t} variant="lower" />
+              <TestimonialCard key={`row2-${i}`} testimonial={t} variant="lower" />
             ))}
           </div>
         </div>
@@ -331,31 +326,48 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-12">
+      {/* Dark Footer */}
+      <footer className="bg-slate-950 border-t border-slate-800 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
             
             {/* Brand & Credit */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-slate-900 p-1.5 rounded-lg">
-                  <Presentation className="text-white" size={16} />
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="bg-white/10 p-2 rounded-xl border border-white/10">
+                  <Presentation className="text-white" size={24} />
                 </div>
-                <span className="font-bold text-slate-900">SlideGen AI</span>
+                <span className="text-2xl font-bold text-white tracking-tight">SlideGen AI</span>
               </div>
-              <p className="text-slate-500 text-sm font-medium">
-                Professional tools for everyone. Developed by Catalyst Learning Field.
+              <p className="text-slate-400 text-sm max-w-xs leading-relaxed">
+                Empowering teams with intelligent AI tools for structured content, professional decks, and actionable insights.
+                <br /><br />
+                <span className="text-slate-500 font-medium">Developed by Catalyst Learning Field.</span>
               </p>
             </div>
 
-            {/* Contact Info */}
-            <div className="flex flex-col md:items-end gap-2 text-sm text-slate-600">
-              <div className="flex flex-col md:flex-row gap-4">
-                 <a href="tel:+23470171783" className="hover:text-indigo-600 transition-colors font-medium">Support: +23470171783</a>
-                 <a href="mailto:sopulumich.catalyst@gmail.com" className="hover:text-indigo-600 transition-colors font-medium">Email: sopulumich.catalyst@gmail.com</a>
+            {/* Quick Links & Contact Info */}
+            <div className="flex flex-col md:items-end gap-6 text-sm">
+              <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+                 <div className="space-y-1">
+                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2">Support Hotline</p>
+                    <a href="tel:+23470171783" className="text-white text-lg font-bold hover:text-indigo-400 transition-colors">+234 701 717 8300</a>
+                 </div>
+                 <div className="space-y-1">
+                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2">Email Inquiries</p>
+                    <a href="mailto:sopulumich.catalyst@gmail.com" className="text-white text-lg font-bold hover:text-indigo-400 transition-colors">sopulumich.catalyst@gmail.com</a>
+                 </div>
               </div>
-              <p className="text-slate-400 text-xs mt-1">© {new Date().getFullYear()} SlideGen AI. All rights reserved.</p>
+              
+              <div className="pt-8 border-t border-slate-800 w-full md:w-auto flex flex-col md:items-end gap-2">
+                <div className="flex gap-6 text-slate-500 font-semibold mb-2">
+                   <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+                   <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+                </div>
+                <p className="text-slate-500 text-xs">
+                  © {new Date().getFullYear()} SlideGen AI. All rights reserved. Precision built for performance.
+                </p>
+              </div>
             </div>
           </div>
         </div>

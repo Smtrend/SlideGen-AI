@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Slide, SlideTransition } from '../types';
 import { X, Plus, Trash, Image as ImageIcon, Upload, Monitor, Presentation } from 'lucide-react';
@@ -127,28 +128,38 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ slide, isOpen, onSave,
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Bullet Points</label>
               <div className="space-y-3">
-                {bullets.map((bullet, index) => (
-                  <div key={index} className="flex gap-2 items-center">
-                    <div className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
-                    <input
-                      type="text"
-                      value={bullet}
-                      onChange={(e) => handleBulletChange(index, e.target.value)}
-                      className="flex-1 p-2 border border-slate-300 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
-                    />
-                    <button
-                      onClick={() => removeBullet(index)}
-                      className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                    >
-                      <Trash size={16} />
-                    </button>
+                {bullets.length === 0 ? (
+                  <div className="p-8 border-2 border-dashed border-slate-200 rounded-xl text-center">
+                    <p className="text-sm text-slate-400 italic">No bullet points added yet. Add points to guide your presentation.</p>
                   </div>
-                ))}
+                ) : (
+                  bullets.map((bullet, index) => (
+                    <div key={index} className="flex gap-2 items-center">
+                      <div className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
+                      <input
+                        type="text"
+                        value={bullet}
+                        onChange={(e) => handleBulletChange(index, e.target.value)}
+                        className="flex-1 p-2 border border-slate-300 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
+                        placeholder="Add a bullet point..."
+                      />
+                      <button
+                        onClick={() => removeBullet(index)}
+                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
+                  ))
+                )}
                 <button
                   onClick={addBullet}
-                  className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-2"
+                  className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-2 group"
                 >
-                  <Plus size={16} /> Add Bullet Point
+                  <div className="bg-indigo-50 p-1 rounded-md group-hover:bg-indigo-100 transition-colors">
+                    <Plus size={16} />
+                  </div>
+                  Add Bullet Point
                 </button>
               </div>
             </div>

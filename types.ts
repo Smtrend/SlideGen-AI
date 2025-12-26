@@ -51,6 +51,11 @@ export enum SlideTransition {
   UNCOVER = 'uncover'
 }
 
+export enum SourceMode {
+  TEXT = 'TEXT',
+  TOPIC = 'TOPIC'
+}
+
 export enum GenerationMode {
   ORGANIZE = 'ORGANIZE',
   ENHANCE = 'ENHANCE',
